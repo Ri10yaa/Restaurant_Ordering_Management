@@ -3,7 +3,7 @@ package com.project.restaurantOrderingManagement.models;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-@Document(collection = "")
+@Document(collection = "employee")
 public class Employee {
     @Id
  private String empCode;
@@ -17,6 +17,10 @@ public class Employee {
         return empCode;
     }
 
+    public void setEmpCode(String empCode) {
+        this.empCode = empCode;
+    }
+
     public String getEmpName() {
         return empName;
     }
@@ -25,15 +29,7 @@ public class Employee {
         this.empName = empName;
     }
 
-    public String getSpec(String spec) {
-        return this.spec;
-    }
-
-    public void setSpec(String spec) {
-        this.spec = spec;
-    }
-
-    public String getEmpRole(String role) {
+    public String getEmpRole() {
         return empRole;
     }
 
@@ -41,7 +37,11 @@ public class Employee {
         this.empRole = empRole;
     }
 
-    public void setEmpCode(String empCode) {
-        this.empCode = empCode;
+    public String getSpec() {
+        return spec;
+    }
+
+    public void setSpec(String spec) {
+        this.spec = spec;
     }
 }

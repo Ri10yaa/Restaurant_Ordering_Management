@@ -6,8 +6,9 @@ import com.project.restaurantOrderingManagement.repositories.empRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Optional;
+import java.util.Random;
+
 @Service
 public class employeeService {
     @Autowired
@@ -19,6 +20,8 @@ public class employeeService {
 
     public String formCode(empInfo emp) {
         String code  = "";
+        Random ram = new Random();
+        int randomNum = ram.nextInt(9000) % 900 ;
         if(emp.getRole().equals("waiter")) {
             code+="W";
         }
@@ -28,29 +31,34 @@ public class employeeService {
         else if(emp.getRole().equals("manger")) {
             code+="M";
         }
+        else if(emp.getRole().equals("head chef")) {
+            code+="HC";
+        }
         String name = emp.getLastName().replace(" ","").substring(0,2).toUpperCase();
         code += name;
+
         String dob = emp.getDate().substring(0,4);
         code += dob;
+        code+=String.valueOf(randomNum);
         return code;
     }
-    public void addEmployee(empInfo emp) {
+    public Employee addEmployee(empInfo emp) {
         String code = formCode(emp);
         Employee e = new Employee();
         e.setEmpCode(code);
-        e.setEmpName(emp.getFirstName());
+        e.setEmpName(emp.getFirstName()+ " " + emp.getLastName());
         e.setEmpRole(emp.getRole());
         e.setSpec(emp.getSpec());
-        erepo.save(e);
+        return erepo.save(e);
     }
 
-    public Employee updateEmployee(String code,empInfo emp){
+    public Employee updateEmployee(String code, Employee emp){
         Optional<Employee> en = erepo.findById(code);
         if(en.isPresent()) {
             Employee e = en.get();
             e.setEmpCode(code);
-            e.setEmpName(emp.getFirstName());
-            e.setEmpRole(emp.getRole());
+            e.setEmpName(emp.getEmpName());
+            e.setEmpRole(emp.getEmpRole());
             e.setSpec(emp.getSpec());
             return erepo.save(e);
         }
@@ -64,7 +72,8 @@ public class employeeService {
     }
 
     public Employee getEmployee(String code){
-        return erepo.findById(code).get();
+        Employee emp = erepo.findById(code).get();
+        return emp;
     }
 
 }
