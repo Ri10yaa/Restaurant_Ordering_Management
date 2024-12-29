@@ -3,7 +3,7 @@ package com.project.restaurantOrderingManagement.models;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-@Document(collection = "")
+@Document(collection = "tables")
 public class table {
     @Id
     private int tableNo;
