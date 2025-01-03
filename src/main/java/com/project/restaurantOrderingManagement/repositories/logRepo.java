@@ -7,7 +7,7 @@ import org.springframework.stereotype.Repository;
 import java.util.Date;
 import java.util.List;
 @Repository
-public interface logRepo extends MongoRepository<Log, Integer> {
+public interface logRepo extends MongoRepository<Log, Object> {
     List<Log> findAllByWaiterCode(String code);
 
     List<Log> findAllByDate(Date date);

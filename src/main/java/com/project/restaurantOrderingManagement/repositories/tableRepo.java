@@ -8,6 +8,5 @@ import java.util.List;
 @Repository
 public interface tableRepo  extends MongoRepository<table,Integer> {
     List<table> findAllByWaiterCode(String waiterCode);
-    List<table> findAllByStatus(String status);
 
 }

@@ -3,46 +3,43 @@ package com.project.restaurantOrderingManagement.admin;
 import com.project.restaurantOrderingManagement.models.Employee;
 import com.project.restaurantOrderingManagement.models.Food;
 import com.project.restaurantOrderingManagement.models.table;
-import com.project.restaurantOrderingManagement.repositories.foodRepo;
 import com.project.restaurantOrderingManagement.service.employeeService;
+import com.project.restaurantOrderingManagement.service.foodService;
 import com.project.restaurantOrderingManagement.service.tableService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class ManagerService {
     @Autowired
-    private final foodRepo foodRepo;
+    private final foodService foodService;
     @Autowired
     private final employeeService employeeService;
     @Autowired
     private final tableService tableService;
 
-    public ManagerService(employeeService employeeService, foodRepo foodRepo, tableService tableService) {
+    public ManagerService(employeeService employeeService, foodService foodService, tableService tableService) {
         this.employeeService = employeeService;
-        this.foodRepo = foodRepo;
+        this.foodService = foodService;
         this.tableService = tableService;
     }
 
     public Food addFoodItem(Food foodItem) {
-        return foodRepo.save(foodItem);
+        return foodService.addFoodItem(foodItem);
     }
 
     public void removeFoodItem(String code) {
-        foodRepo.deleteById(code);
+        foodService.deleteFoodItem(code);
     }
 
-    public Food alterMenu(String id, List<String> meals) {
-        Optional<Food> existingItem = foodRepo.findById(id);
-        if (existingItem.isPresent()) {
-            Food item = existingItem.get();
-            item.setMealType(meals);
-            return foodRepo.save(item);
-        }
-        throw new RuntimeException("Food item not found with ID: " + id);
+    public Food updateFoodItem(String code, Food foodItem) {
+       return foodService.updateFoodItem(code, foodItem);
+    }
+
+    public Food getFoodItem(String code) {
+        return foodService.getFoodItem(code);
     }
 
     public Employee addStaff(empInfo employee) {
@@ -53,7 +50,7 @@ public class ManagerService {
         employeeService.deleteEmployee(code);
     }
 
-    public Employee alterStaff(String code, Employee employee) {
+    public Employee alterStaff(String code, empInfo employee) {
         return employeeService.updateEmployee(code,employee);
     }
 
@@ -63,6 +60,14 @@ public class ManagerService {
 
     public table addTableItem(table tableItem) {
         return tableService.addTable(tableItem);
+    }
+
+    public List<table> getAllTables(String code){
+        return tableService.getAllTablesByWaiter(code);
+    }
+
+    public table updateTableItem(int tableNo, String code) {
+        return tableService.updateTableByWaiter(tableNo, code);
     }
 
     public void removeTableItem(int tableNo) {

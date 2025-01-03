@@ -6,10 +6,9 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Document(collection = "tables")
 public class table {
     @Id
-    private int tableNo;
+    private Integer tableNo;
     private String waiterCode;
     private int noOfSeats;
-    private String status; // using or not using
 
     public table() {}
 
@@ -21,19 +20,11 @@ public class table {
         this.noOfSeats = noOfSeats;
     }
 
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public int getTableNo() {
+    public Integer getTableNo() {
         return tableNo;
     }
 
-    public void setTableNo(int tableNo) {
+    public void setTableNo(Integer tableNo) {
         this.tableNo = tableNo;
     }
 
