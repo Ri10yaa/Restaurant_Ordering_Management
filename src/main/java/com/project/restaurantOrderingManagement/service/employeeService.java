@@ -1,6 +1,8 @@
 package com.project.restaurantOrderingManagement.service;
 
 import com.project.restaurantOrderingManagement.admin.empInfo;
+import com.project.restaurantOrderingManagement.exceptions.DeleteOperationException;
+import com.project.restaurantOrderingManagement.exceptions.EntityNotFoundException;
 import com.project.restaurantOrderingManagement.models.Employee;
 import com.project.restaurantOrderingManagement.repositories.empRepo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,7 +39,7 @@ public class employeeService {
         String name = emp.getLastName().replace(" ","").substring(0,2).toUpperCase();
         code += name;
 
-        String dob = emp.getDate().substring(0,4);
+        String dob = emp.getDate().replace("/","").substring(3,4);
         code += dob;
         code+=String.valueOf(randomNum);
         return code;
@@ -52,13 +54,13 @@ public class employeeService {
         return erepo.save(e);
     }
 
-    public Employee updateEmployee(String code, Employee emp){
+    public Employee updateEmployee(String code, empInfo emp){
         Optional<Employee> en = erepo.findById(code);
         if(en.isPresent()) {
             Employee e = en.get();
             e.setEmpCode(code);
-            e.setEmpName(emp.getEmpName());
-            e.setEmpRole(emp.getEmpRole());
+            e.setEmpName(emp.getFirstName() + " " + emp.getLastName());
+            e.setEmpRole(emp.getRole());
             e.setSpec(emp.getSpec());
             return erepo.save(e);
         }
@@ -68,12 +70,28 @@ public class employeeService {
     }
 
     public void deleteEmployee(String code){
-        erepo.deleteById(code);
+        if(erepo.existsById(code)) {
+            try{
+                erepo.deleteById(code);
+            }
+            catch(Exception e) {
+                throw new DeleteOperationException("Error while deleting employee with code " +code,e);
+            }
+        }
+        else{
+            throw new EntityNotFoundException("Employee with code "+code+" does not exist");
+        }
     }
 
     public Employee getEmployee(String code){
-        Employee emp = erepo.findById(code).get();
-        return emp;
+        Optional<Employee> emp = erepo.findById(code);
+        if(emp.isPresent()) {
+            return emp.get();
+        }
+        else{
+            return null;
+        }
+
     }
 
 }

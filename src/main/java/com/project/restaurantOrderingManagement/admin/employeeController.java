@@ -1,17 +1,30 @@
 package com.project.restaurantOrderingManagement.admin;
 
 import com.project.restaurantOrderingManagement.models.Employee;
+import com.project.restaurantOrderingManagement.repositories.empRepo;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Optional;
 
+import static org.springframework.http.ResponseEntity.ok;
+
 @RestController
-@RequestMapping("/employee")
+@RequestMapping("/manager/employee")
 public class employeeController {
     private final ManagerService managerService;
-    public employeeController(ManagerService managerService) {
+    private final empRepo empRepo;
+
+    public employeeController(ManagerService managerService, empRepo empRepo) {
         this.managerService = managerService;
+        this.empRepo = empRepo;
+    }
+
+    //for testing
+    @GetMapping("/")
+    public ResponseEntity<List<Employee>> getAllEmployees() {
+        return ResponseEntity.ok(empRepo.findAll());
     }
 
     @PostMapping("/add")
@@ -20,8 +33,8 @@ public class employeeController {
         return ResponseEntity.ok(emp);
     }
 
-    @GetMapping("/get/{code}")
-    public ResponseEntity<Employee> getEmployee(@PathVariable String code) {
+    @GetMapping("/{code}")
+    public ResponseEntity<Employee> getEmployee(@PathVariable("code") String code) {
         Optional<Employee> emp = Optional.ofNullable(managerService.getStaff(code));
         if(emp.isPresent()) {
             return ResponseEntity.ok(emp.get());
@@ -36,7 +49,7 @@ public class employeeController {
     }
 
     @PutMapping("/{code}")
-    public ResponseEntity<Employee> updateEmployee(@PathVariable String code, @RequestBody Employee empInfo) {
+    public ResponseEntity<Employee> updateEmployee(@PathVariable String code, @RequestBody empInfo empInfo) {
        Employee emp = managerService.alterStaff(code, empInfo);
        if(emp != null) {
            return ResponseEntity.ok(emp);

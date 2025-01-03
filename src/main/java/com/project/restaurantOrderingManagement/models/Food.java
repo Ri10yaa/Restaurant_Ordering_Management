@@ -9,16 +9,19 @@ public class Food {
     @Id
     private String foodCode;
     private String foodName;
-    private String cuisine;
+    private String category;
     private List<String> mealType;
     private double price;
     public Food() {}
-    public String getCuisine() {
-        return cuisine;
+
+    public String getCategory() {
+        return category;
     }
-    public void setCuisine(String cuisine) {
-        this.cuisine = cuisine;
+
+    public void setCategory(String category) {
+        this.category = category;
     }
+
     public String getFoodCode() {
         return foodCode;
     }

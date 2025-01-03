@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/login")
+@RequestMapping("/loginemp")
 public class loginController {
     @Autowired
     private final loginService loginService;
