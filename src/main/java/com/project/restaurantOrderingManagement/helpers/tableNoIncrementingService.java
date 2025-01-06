@@ -11,6 +11,9 @@ public class tableNoIncrementingService {
     @Autowired
     private RedisTemplate<String, Object> redisTemplate;
 
+    public void setTableNo() {
+        redisTemplate.opsForValue().set(counter_key, 0);
+    }
     public Integer getCurrentTableNo() {
         Integer currentTableNo = (Integer) redisTemplate.opsForValue().get(counter_key);
         return currentTableNo == null ? 0 : currentTableNo;
