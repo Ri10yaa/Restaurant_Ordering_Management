@@ -18,6 +18,9 @@ public class foodCodeIncrementingService {
     private String formatCode(long code) {
         return String.format("%03d", code);
     }
+    public void setFoodCodeIncrementing() {
+        redisTemplate.opsForValue().set(foodCodeIncrementing,"000");
+    }
     public String getFoodCodeIncrementing() {
         long currentFoodCode = (long) redisTemplate.opsForValue().get(foodCodeIncrementing);
         long value = currentFoodCode != 0 ? currentFoodCode : 0;

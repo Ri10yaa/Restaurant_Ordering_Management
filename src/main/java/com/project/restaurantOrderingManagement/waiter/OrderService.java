@@ -5,10 +5,17 @@ import com.project.restaurantOrderingManagement.repositories.logRepo;
 import com.project.restaurantOrderingManagement.service.foodService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.core.aggregation.VariableOperators;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -21,6 +28,7 @@ public class OrderService {
     private final logRepo logRepo;
     @Autowired
     private final foodServiceRedis foodServiceRedis;
+    private final String key ="orders:bill:";
 
     public OrderService(RedisTemplate<String, Object> redisTemplate, logRepo logRepo, foodServiceRedis foodServiceRedis,foodService foodService) {
         this.redisTemplate = redisTemplate;
@@ -28,58 +36,100 @@ public class OrderService {
         this.foodServiceRedis = foodServiceRedis;
     }
 
-    public void addFoodItem(long billno, String foodCode,int quantity) {
+    public void storeOrder(long billno, Order order) throws IOException {
         try{
-            redisTemplate.opsForList().rightPush("orders:bill" + billno, new Order(foodCode,quantity,"Queued"));
-            foodServiceRedis.decrementAvailability(foodCode,quantity);
-        } catch (RuntimeException e) {
-            System.err.println("Error adding food item" + e.getMessage());
+            System.out.println("Foodcode : " + order.getFoodCode());
+            System.out.println("Quantity : " + order.getQuantity());
+            System.out.println("Status : " + order.getStatus());
+            redisTemplate.opsForHash().put(key + billno + ":" + order.getFoodCode(),"quantity",String.valueOf(order.getQuantity()));
+            redisTemplate.opsForHash().put(key + billno + ":" + order.getFoodCode(),"status",order.getStatus());
+            foodServiceRedis.decrementAvailability(order.getFoodCode(),order.getQuantity());
+        }catch (Exception e){
+            throw new IOException("Order not inserted\n" + e.getMessage());
         }
 
     }
 
-    public void removeFoodItem(long billno, Order order) {
-        redisTemplate.opsForList().remove("orders:bill" + billno,1,order);
-        foodServiceRedis.incrementAvailability(order.getFoodCode(),order.getQuantity());
+    public void removeFoodItem(long billno, String foodCode) throws IOException {
+        try{
+            Map<Object,Object> orderData = redisTemplate.opsForHash().entries(key + billno + ":" + (String)foodCode);
+            int quantity = Integer.parseInt((String)redisTemplate.opsForHash().get(key + billno + ":" + (String) foodCode,"quantity"));
+            System.out.println("Quantity : " + quantity);
+            redisTemplate.delete(key + billno + ":" + foodCode);
+            foodServiceRedis.incrementAvailability(foodCode,quantity);
+        }
+        catch (Exception e){
+            throw new IOException(e.getMessage());
+        }
+
     }
 
-    public void updateFoodItem(long billno, String foodCode,int quantity) {
+    public void updateFoodItem(long billno, Order order) throws IOException {
+       try{
+           Map<Object,Object> orderData = redisTemplate.opsForHash().entries(key + billno + ":" + order.getFoodCode());
+           if(orderData.isEmpty()){
+               throw new IOException("Order not found");
+           }
+           Integer quantity = Integer.parseInt((String)orderData.get("quantity"));
+           System.out.println("New quantity " + order.getQuantity());
+           System.out.println("Old Quantity " + quantity.getClass());
+           if(quantity < order.getQuantity()){
+               foodServiceRedis.decrementAvailability(order.getFoodCode(),order.getQuantity()-quantity);
+           } else if (quantity > order.getQuantity()) {
+               foodServiceRedis.incrementAvailability(order.getFoodCode(),quantity-order.getQuantity());
+           }
+           redisTemplate.opsForHash().put(key + billno + ":" + order.getFoodCode(),"quantity",String.valueOf(order.getQuantity()));
+           redisTemplate.opsForHash().put(key + billno + ":" + order.getFoodCode(),"status",order.getStatus());
+       }
+       catch (Exception e){
+           throw new IOException(e.getMessage());
+       }
+
+    }
+
+    public List<Order> getOrders(long billno) throws IOException {
         try{
-            List<Order> orders = redisTemplate.opsForList().range("orders:bill" + billno,0,-1).stream().map(obj -> (Order) obj).collect(Collectors.toList());
-            if(orders.size()!=0){
-                for(Order order : orders){
-                    if(order.getFoodCode().equals(foodCode)){
-                        int diff = quantity - order.getQuantity();
-                        if(diff>0){
-                            foodServiceRedis.decrementAvailability(foodCode,diff);
-                            order.setQuantity(order.getQuantity()+diff);
-                        }
-                        else {
-                            foodServiceRedis.incrementAvailability(foodCode,diff);
-                            order.setQuantity(order.getQuantity()-diff);
-                        }
-                    }
-                }
-                return;
+            String pattern = key + billno + ":*";
+            Set<String> keys = redisTemplate.keys(pattern);
+            if(keys.isEmpty()){
+                return new ArrayList<>();
             }
-            throw new RuntimeException("Order not found");
+            List<Order> orders = new ArrayList<>();
+            for (String key : keys) {
+                String foodCode = key.substring(key.lastIndexOf(":")+1);
+                int quantity = Integer.parseInt((String) redisTemplate.opsForHash().get(key, "quantity"));
+                String  status = (String) redisTemplate.opsForHash().get(key, "status");
+                orders.add(new Order(foodCode, quantity, status));
+            }
+            return orders;
         }
-        catch (RuntimeException e){
-            System.err.println("Error updating food item" + e.getMessage());
-        }
-
+        catch (Exception e){
+            throw new IOException(e.getMessage());
+        } 
     }
 
-    public List<Order> closeOrder(long billno) {
-        List<Object> orders = redisTemplate.opsForList().range("orders:bill" + billno, 0, -1);
-        if (orders!=null && !orders.isEmpty()) {
-            redisTemplate.delete("orders:bill" + billno);
-            return orders.stream().map(order -> (Order) order).collect(Collectors.toList());
+    public List<Order> closeOrder(long billno) throws IOException {
+        try{
+           List<Order> orders = getOrders(billno);
+           boolean canClose = true;
+           for (Order order : orders) {
+               if(!(order.getStatus().equalsIgnoreCase("served"))){
+                    canClose = false;
+                    break;
+               }
+           }
+           if(canClose){
+               return orders;
+           }
+           else{
+               return new ArrayList<>();
+           }
         }
-        else{
-            return null;
+        catch (Exception e){
+            throw new IOException("Failed to retrieve orders");
         }
     }
+
 
 
 }

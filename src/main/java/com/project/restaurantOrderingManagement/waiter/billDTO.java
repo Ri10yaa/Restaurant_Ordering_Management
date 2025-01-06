@@ -1,15 +1,20 @@
 package com.project.restaurantOrderingManagement.waiter;
 
+import com.project.restaurantOrderingManagement.helpers.BillNoIncrementingService;
+import org.springframework.beans.factory.annotation.Autowired;
+
 public class billDTO {
     private long billNo;
-    private String waitercode;
+    private String waiterCode;
     private int tableNo;
 
-    public billDTO(long billNo, String waitercode, int tableNo) {
+    public billDTO(long billNo, String waiterCode, int tableNo) {
         this.billNo = billNo;
-        this.waitercode = waitercode;
-
+        this.waiterCode = waiterCode;
+        this.tableNo = tableNo;
     }
+
+    public billDTO() {}
 
     public long getBillNo() {
         return billNo;
@@ -19,17 +24,19 @@ public class billDTO {
         this.billNo = billNo;
     }
 
-    public String getWaitercode() {
-        return waitercode;
-    }
-
-    public void setWaitercode(String waitercode) {
-        this.waitercode = waitercode;
-    }
     public int getTableNo() {
         return tableNo;
     }
+
     public void setTableNo(int tableNo) {
         this.tableNo = tableNo;
+    }
+
+    public String getWaiterCode() {
+        return waiterCode;
+    }
+
+    public void setWaiterCode(String waiterCode) {
+        this.waiterCode = waiterCode;
     }
 }

@@ -19,6 +19,7 @@ public class foodServiceRedis {
 
     public void decrementAvailability(String foodCode, int quantity) {
         Integer availability = (Integer) redisTemplate.opsForValue().get("food:" + foodCode);
+        System.out.println("Availability : " + availability);
         if (availability != null && availability >= quantity) {
             redisTemplate.opsForValue().decrement("food:" + foodCode, quantity);
         } else {
