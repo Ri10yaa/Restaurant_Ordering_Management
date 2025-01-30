@@ -8,7 +8,7 @@ import java.io.IOException;
 
 @RestController
 @RequestMapping("/bill")
-public class billController {
+public class    billController {
     @Autowired
     private final billService billService;
 
