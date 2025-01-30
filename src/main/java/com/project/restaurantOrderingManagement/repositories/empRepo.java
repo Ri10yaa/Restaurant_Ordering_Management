@@ -7,4 +7,5 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface empRepo extends MongoRepository<Employee, String> {
     public Employee findByEmpCodeAndEmpName(String empCode, String empName);
+    
 }

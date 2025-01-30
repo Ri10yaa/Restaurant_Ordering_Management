@@ -5,6 +5,7 @@ import com.project.restaurantOrderingManagement.repositories.empRepo;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.ObjectInputFilter;
 import java.util.List;
 import java.util.Optional;
 
@@ -27,10 +28,10 @@ public class employeeController {
         return ResponseEntity.ok(empRepo.findAll());
     }
 
-    @PostMapping("/add")
-    public ResponseEntity<Employee> addEmployee(@RequestBody empInfo empInfo) {
+    @PostMapping
+    public ResponseEntity<String> addEmployee(@RequestBody empInfo empInfo) {
         Employee emp = managerService.addStaff(empInfo);
-        return ResponseEntity.ok(emp);
+        return ResponseEntity.ok(emp.getEmpCode());
     }
 
     @GetMapping("/{code}")
@@ -45,7 +46,7 @@ public class employeeController {
     @DeleteMapping("/{code}")
     public ResponseEntity<Void> deleteEmployee(@PathVariable String code) {
         managerService.removeStaff(code);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok().build();
     }
 
     @PutMapping("/{code}")

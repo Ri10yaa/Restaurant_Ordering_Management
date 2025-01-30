@@ -2,13 +2,14 @@ package com.project.restaurantOrderingManagement.admin;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 
 public class empInfo {
     private String firstName;
     private String lastName;
     private String date;
     private String role;
-    private String spec;
+    private List<String> spec;
     public empInfo() {}
 
     public String getDate() {
@@ -43,11 +44,11 @@ public class empInfo {
         this.role = role;
     }
 
-    public String getSpec() {
+    public List<String> getSpec() {
         return spec;
     }
 
-    public void setSpec(String spec) {
+    public void setSpec(List<String> spec) {
         this.spec = spec;
     }
 }

@@ -4,13 +4,15 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.redis.core.index.Indexed;
 
+import java.util.List;
+
 @Document(collection = "employee")
 public class Employee {
     @Id
  private String empCode;
  private String empName;
  private String empRole;
- private  String spec;
+ private List<String> spec;
 
     public Employee() {}
 
@@ -38,11 +40,11 @@ public class Employee {
         this.empRole = empRole;
     }
 
-    public String getSpec() {
+    public List<String> getSpec() {
         return spec;
     }
 
-    public void setSpec(String spec) {
+    public void setSpec(List<String> spec) {
         this.spec = spec;
     }
 }

@@ -30,13 +30,19 @@ public class employeeService {
         else if(emp.getRole().equals("chef")) {
             code+="C";
         }
-        else if(emp.getRole().equals("manger")) {
+        else if(emp.getRole().equals("manager")) {
             code+="M";
         }
         else if(emp.getRole().equals("head chef")) {
             code+="HC";
         }
-        String name = emp.getLastName().replace(" ","").substring(0,2).toUpperCase();
+        String name = emp.getLastName().replace(" ","");
+        if(name.length() >= 2){
+            name = name.substring(0,2).toUpperCase();
+        }
+        else{
+            name = name.toUpperCase();
+        }
         code += name;
 
         String dob = emp.getDate().replace("/","").substring(3,4);
