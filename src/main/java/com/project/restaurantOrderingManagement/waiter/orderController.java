@@ -1,11 +1,14 @@
 package com.project.restaurantOrderingManagement.waiter;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.util.List;
+import java.util.Collections;
+import java.util.*;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/order")
@@ -41,10 +44,39 @@ public class orderController {
     }
 
     @DeleteMapping("/{billno}")
-    public ResponseEntity<Object> deleteOrder(@PathVariable("billno") String billno, @RequestBody String foodCode) throws IOException {
-        System.out.println("Foodcode : " + foodCode);
-        orderService.removeFoodItem(Long.parseLong(billno), foodCode);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<Object> deleteOrder(@PathVariable("billno") String billno,
+                                              @RequestBody Map<String, String> requestBody) throws IOException {
+        System.out.println("Received request to delete food item.");
+        System.out.println("Bill No: " + billno);
+        System.out.println("Request Body: " + requestBody);
+
+        String foodCode = requestBody.get("foodCode");
+        System.out.println(foodCode);
+        if (foodCode == null || foodCode.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body("FoodCode is missing in request body.");
+        }
+
+        List<Order> orders = Optional.ofNullable(orderService.getOrders(Long.parseLong(billno)))
+                .orElse(Collections.emptyList());
+
+        if (orders.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No orders found.");
+        }
+
+        Optional<Order> optionalOrder = orders.stream()
+                .filter(order -> order.getFoodCode().equalsIgnoreCase(foodCode))
+                .findFirst();
+
+        if (!optionalOrder.isPresent()) { // Java 8 alternative to isEmpty()
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Food item not found.");
+        }
+
+        Order orderToUpdate = optionalOrder.get();
+        orderToUpdate.setStatus("Deleted");
+
+        orderService.updateFoodItem(Long.parseLong(billno), orderToUpdate);
+
+        return ResponseEntity.ok("Order status updated to Deleted.");
     }
 
 }

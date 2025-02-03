@@ -7,7 +7,6 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class table {
     @Id
     private Integer tableNo;
-    private String waiterCode;
     private int noOfSeats;
 
     public table() {}
@@ -28,11 +27,5 @@ public class table {
         this.tableNo = tableNo;
     }
 
-    public String getWaiterCode() {
-        return waiterCode;
-    }
 
-    public void setWaiterCode(String waiterCode) {
-        this.waiterCode = waiterCode;
-    }
 }

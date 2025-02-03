@@ -64,7 +64,6 @@ public class employeeService {
         Optional<Employee> en = erepo.findById(code);
         if(en.isPresent()) {
             Employee e = en.get();
-            e.setEmpCode(code);
             e.setEmpName(emp.getFirstName() + " " + emp.getLastName());
             e.setEmpRole(emp.getRole());
             e.setSpec(emp.getSpec());
