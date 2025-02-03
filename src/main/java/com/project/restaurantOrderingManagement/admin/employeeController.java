@@ -50,8 +50,8 @@ public class employeeController {
     }
 
     @PutMapping("/{code}")
-    public ResponseEntity<Employee> updateEmployee(@PathVariable String code, @RequestBody empInfo empInfo) {
-       Employee emp = managerService.alterStaff(code, empInfo);
+    public ResponseEntity<Employee> updateEmployee(@PathVariable String code, @RequestBody empInfo employeeInfo) {
+       Employee emp = managerService.alterStaff(code, employeeInfo);
        if(emp != null) {
            return ResponseEntity.ok(emp);
        }

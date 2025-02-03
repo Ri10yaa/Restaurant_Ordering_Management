@@ -16,9 +16,9 @@ public class tableService {
     @Autowired
     tableRepo tableRepo;
     //get by waiter
-    public List<table> getAllTablesByWaiter(String code) {
-        return tableRepo.findAllByWaiterCode(code);
-    }
+//    public List<table> getAllTablesByWaiter(String code) {
+//       // return tableRepo.findAllByWaiterCode(code);
+//    }
 
     public table addTable(table table) {
         return tableRepo.save(table);
@@ -39,11 +39,5 @@ public class tableService {
             throw new EntityNotFoundException("Table does not exist");
         }
     }
-    //update waiter alone
-    public table updateTableByWaiter(int tableNo, String code) {
-        table t = tableRepo.findById(tableNo).get();
-        System.out.println("COde: " + code);
-        t.setWaiterCode(code);
-         return tableRepo.save(t);
-    }
+
 }

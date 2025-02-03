@@ -29,11 +29,11 @@ public class tableController {
         return ResponseEntity.ok(t);
     }
 
-    @GetMapping("/{code}")
-    ResponseEntity<List<table>> getTables(@PathVariable String code) {
-        List<table> tables = managerService.getAllTables(code);
-        return ResponseEntity.ok(tables);
-    }
+//    @GetMapping("/{code}")
+//    ResponseEntity<List<table>> getTables(@PathVariable String code) {
+//        List<table> tables = managerService.getAllTables(code);
+//        return ResponseEntity.ok(tables);
+//    }
 
     @DeleteMapping("/{tableNo}")
     ResponseEntity<table> deleteTable(@PathVariable String tableNo) {
@@ -42,13 +42,13 @@ public class tableController {
         return ResponseEntity.noContent().build();
     }
 
-    @PutMapping("/{tableNo}")
-    ResponseEntity<table> updateTable(@PathVariable String tableNo, @RequestBody String code) {
-        int tableNoInt = Integer.parseInt(tableNo);
-        table t = managerService.updateTableItem(tableNoInt,code);
-        return ResponseEntity.ok(t);
+//    @PutMapping("/{tableNo}")
+//    ResponseEntity<table> updateTable(@PathVariable String tableNo, @RequestBody String code) {
+//        int tableNoInt = Integer.parseInt(tableNo);
+//        table t = managerService.updateTableItem(tableNoInt,code);
+//        return ResponseEntity.ok(t);
 
-    }
+//    }
 
 
 }

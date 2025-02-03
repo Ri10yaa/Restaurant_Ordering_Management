@@ -62,13 +62,11 @@ public class ManagerService {
         return tableService.addTable(tableItem);
     }
 
-    public List<table> getAllTables(String code){
-        return tableService.getAllTablesByWaiter(code);
-    }
+//    public List<table> getAllTables(String code){
+//        return tableService.getAllTablesByWaiter(code);
+//    }
 
-    public table updateTableItem(int tableNo, String code) {
-        return tableService.updateTableByWaiter(tableNo, code);
-    }
+
 
     public void removeTableItem(int tableNo) {
         tableService.deleteTable(tableNo);

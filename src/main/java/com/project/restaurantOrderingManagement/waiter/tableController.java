@@ -21,9 +21,9 @@ public class tableController {
         this.service = service;
     }
 
-    @GetMapping("/{waitercode}")
-    public ResponseEntity<List<table>> getAllTables(@PathVariable("waitercode") String waitercode){
-        return ResponseEntity.ok(service.getAllTablesByWaiter(waitercode));
-    }
+//    @GetMapping("/{waitercode}")
+//    public ResponseEntity<List<table>> getAllTables(@PathVariable("waitercode") String waitercode){
+//        return ResponseEntity.ok(service.getAllTablesByWaiter(waitercode));
+//    }
 
 }

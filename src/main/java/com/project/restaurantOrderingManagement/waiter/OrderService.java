@@ -3,6 +3,7 @@ package com.project.restaurantOrderingManagement.waiter;
 import com.project.restaurantOrderingManagement.models.Food;
 import com.project.restaurantOrderingManagement.repositories.logRepo;
 import com.project.restaurantOrderingManagement.service.foodService;
+import com.project.restaurantOrderingManagement.service.queueService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.aggregation.VariableOperators;
@@ -28,22 +29,28 @@ public class OrderService {
     private final logRepo logRepo;
     @Autowired
     private final foodServiceRedis foodServiceRedis;
+    @Autowired
+    private final queueService queueService;
     private final String key ="orders:bill:";
 
-    public OrderService(RedisTemplate<String, Object> redisTemplate, logRepo logRepo, foodServiceRedis foodServiceRedis,foodService foodService) {
+    public OrderService(RedisTemplate<String, Object> redisTemplate, logRepo logRepo, foodServiceRedis foodServiceRedis,foodService foodService,queueService queueService) {
         this.redisTemplate = redisTemplate;
         this.logRepo = logRepo;
         this.foodServiceRedis = foodServiceRedis;
+        this.queueService = queueService;
+    }
+
+    private void pushOrderToQueue(String orderKey) {
+        queueService.enqueue(orderKey);
     }
 
     public void storeOrder(long billno, Order order) throws IOException {
         try{
-            System.out.println("Foodcode : " + order.getFoodCode());
-            System.out.println("Quantity : " + order.getQuantity());
-            System.out.println("Status : " + order.getStatus());
+            String orderKey = key + billno + ":" + order.getFoodCode();
             redisTemplate.opsForHash().put(key + billno + ":" + order.getFoodCode(),"quantity",String.valueOf(order.getQuantity()));
             redisTemplate.opsForHash().put(key + billno + ":" + order.getFoodCode(),"status",order.getStatus());
             foodServiceRedis.decrementAvailability(order.getFoodCode(),order.getQuantity());
+            pushOrderToQueue(orderKey);
         }catch (Exception e){
             throw new IOException("Order not inserted\n" + e.getMessage());
         }
