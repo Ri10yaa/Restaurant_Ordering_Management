@@ -18,11 +18,14 @@ public class AssignmentService {
     }
 
     public String assign(String orderKey, String billNo) {
-        String foodCode = (String) redisTemplate.opsForHash().get(orderKey, "foodCode");
+
+        String[] parts = orderKey.split(":");
+        String foodCode=parts[3];
         String quantity = (String) redisTemplate.opsForHash().get(orderKey, "quantity");
         String status = (String) redisTemplate.opsForHash().get(orderKey, "status");
-
+        System.out.println(foodCode + " " + quantity + " " + status);
         if (foodCode == null || quantity == null || status == null) {
+
             return "Order details not found for orderKey: " + orderKey;
         }
 

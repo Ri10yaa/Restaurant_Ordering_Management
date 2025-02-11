@@ -1,6 +1,6 @@
 package com.project.restaurantOrderingManagement.waiter;
 
-import com.project.restaurantOrderingManagement.models.table;
+import com.project.restaurantOrderingManagement.models.Table;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -15,8 +15,8 @@ public class tableServiceRedis {
         this.redisTemplate = redisTemplate;
     }
 
-    public void resetTableStatus(List<table> tables){
-        for (table table : tables) {
+    public void resetTableStatus(List<Table> tables){
+        for (Table table : tables) {
             redisTemplate.opsForValue().set("table:" + table.getTableNo(),"available");
         }
     }

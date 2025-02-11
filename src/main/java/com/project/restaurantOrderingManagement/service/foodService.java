@@ -74,6 +74,7 @@ public class foodService {
             item.setPrice(food.getPrice());
             item.setCategory(food.getCategory());
             item.setMealType(food.getMealType());
+            item.setVegetarian(food.isVeg());
             return foodRepo.save(item);
         }
         throw new EntityNotFoundException("Food item not found with ID: " + code);
