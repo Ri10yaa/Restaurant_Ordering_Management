@@ -2,7 +2,7 @@ package com.project.restaurantOrderingManagement.admin;
 
 import com.project.restaurantOrderingManagement.models.Employee;
 import com.project.restaurantOrderingManagement.models.Food;
-import com.project.restaurantOrderingManagement.models.table;
+import com.project.restaurantOrderingManagement.models.Table;
 import com.project.restaurantOrderingManagement.service.employeeService;
 import com.project.restaurantOrderingManagement.service.foodService;
 import com.project.restaurantOrderingManagement.service.tableService;
@@ -58,15 +58,17 @@ public class ManagerService {
         return employeeService.getEmployee(code);
     }
 
-    public table addTableItem(table tableItem) {
+    public Table addTableItem(Table tableItem) {
         return tableService.addTable(tableItem);
     }
 
-//    public List<table> getAllTables(String code){
-//        return tableService.getAllTablesByWaiter(code);
-//    }
+    public List<Table> getAllTables(){
+        return tableService.getAllTables();
+    }
 
-
+    public Table updateTableItem(int no, int seats) {
+        return tableService.updateTable(no,seats);
+    }
 
     public void removeTableItem(int tableNo) {
         tableService.deleteTable(tableNo);

@@ -23,6 +23,7 @@ public class queueService {
         orderQueue.add(orderKey);
         String[] parts = orderKey.split(":");
         String billNo = parts[2];
+
         String assignedOrder = assignmentService.assign(orderKey,billNo);
     }
 

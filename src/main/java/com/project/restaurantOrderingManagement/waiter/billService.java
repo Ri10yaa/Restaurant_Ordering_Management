@@ -12,10 +12,9 @@ import org.springframework.stereotype.Service;
 import com.project.restaurantOrderingManagement.repositories.logRepo;
 
 import java.io.*;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+
+//check for calculate amount function
 @Service
 public class billService {
     @Autowired
@@ -40,11 +39,31 @@ public class billService {
 
     private static final String key = "bill:";
     public double calculateAmount(List<Order> orders) {
+        if (orders == null || orders.isEmpty()) {
+            System.err.println("Orders list is null or empty");
+            return 0.0;
+        }
         double amount = 0;
         for (Order order : orders) {
-            Food food =  (Food) foodRepo.findById(order.getFoodCode()).get();
+            if (order == null) {
+                System.err.println("Null order found in the list");
+                continue;
+            }
+            if (order.getFoodCode() == null || order.getFoodCode().isEmpty()) {
+                System.err.println("Invalid foodCode in order: " + order);
+                continue;
+            }
+
+            Optional<Food> foodOptional = foodRepo.findById(order.getFoodCode());
+            if (!foodOptional.isPresent()) {
+                System.err.println("Food not found for foodCode: " + order.getFoodCode());
+                continue;
+            }
+
+            Food food = foodOptional.get();
             amount += food.getPrice() * order.getQuantity();
         }
+
         return amount;
     }
 
@@ -57,42 +76,70 @@ public class billService {
         return new billDTO(billNo, waitercode, tableNo);
     }
 
-    public long storeBill(billDTO billDTO) throws IOException {
-        long bill = billNoIncrementingService.incrementBillNo();
-        billDTO.setBillNo(bill);
-        System.out.println(billDTO.getBillNo());
-        System.out.println(billDTO.getWaiterCode());
-        System.out.println(billDTO.getTableNo());
-        redisTemplate.opsForHash().put(key + bill,"billNo",String.valueOf(billDTO.getBillNo()));
-        redisTemplate.opsForHash().put(key + bill,"waiterCode",billDTO.getWaiterCode());
-        redisTemplate.opsForHash().put(key + bill,"tableNo",String.valueOf(billDTO.getTableNo()));
-        return bill;
+    public long storeBill(String waitercode, String tableNo) throws IOException {
+        try{
+            long bill = billNoIncrementingService.incrementBillNo();
+            redisTemplate.opsForHash().put(key + bill,"billNo",String.valueOf(bill));
+            redisTemplate.opsForHash().put(key + bill,"waiterCode",waitercode);
+            redisTemplate.opsForHash().put(key + bill,"tableNo",tableNo);
+            return bill;
+        }
+        catch(Exception e){
+            throw new RuntimeException("Error inserting bill" + e.getMessage());
+        }
     }
 
-    public void closeBill(long billNo) {
+    public List<Order> closeBill(String waiterCode,long billNo) {
         if(!redisTemplate.hasKey(key + billNo)) {
             throw new EntityNotFoundException("Bill not found");
         }
         try{
-            billDTO bill = getBill(billNo);
             List<Order> orders = orderService.closeOrder(billNo);
+            System.out.println("In bill service");
+            for(Order order : orders){
+                System.out.println(order.getFoodCode());
+            }
+            if(orders.isEmpty()){
+                throw new EntityNotFoundException("Orders are null");
+            }
             double amt = calculateAmount(orders);
+            System.out.println("Amount after close: " + amt);
             Date date = new Date();
 
             Log log = new Log();
             log.setAmount(amt);
             log.setFoodItems(orders);
             log.setBillNo(billNo);
-            log.setWaiterCode(bill.getWaiterCode());
+            log.setWaiterCode(waiterCode);
             log.setDate(date);
             logRepo.save(log);
             redisTemplate.delete(key + billNo);
+            return orders;
         }
         catch(Exception e){
-            throw new RuntimeException("Error while closing bill");
+            throw new RuntimeException("Error while closing bill : " + e.getMessage());
         }
 
-
     }
+
+    public String deleteBill(long billNo) {
+        try{
+            Set<String> bill = redisTemplate.keys(key + billNo);
+            if(bill.isEmpty()){
+                throw new EntityNotFoundException("Bill not found");
+            }
+            else{
+                List<Order> orders = orderService.getOrders(billNo);
+                for(Order order : orders){
+                    orderService.deleteOrder(billNo, order.getFoodCode());
+                }
+                redisTemplate.delete(key + billNo);
+                return "Bill No " + billNo + " deleted";
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Error in deleting bill" + e.getMessage());
+        }
+    }
+
 
 }

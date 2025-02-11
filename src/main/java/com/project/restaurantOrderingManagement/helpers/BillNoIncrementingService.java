@@ -4,7 +4,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 @Service
-public class BillNoIncrementingService {
+public class  BillNoIncrementingService {
     private final RedisTemplate<String, Object> redisTemplate;
     private static final String BILL_NO = "billNo";
 
