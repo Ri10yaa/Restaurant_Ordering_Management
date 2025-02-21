@@ -7,10 +7,12 @@ import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfi
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
 import org.springframework.data.redis.repository.configuration.EnableRedisRepositories;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication(exclude = {SecurityAutoConfiguration.class})
 @EnableMongoRepositories
 @EnableRedisRepositories
+@EnableScheduling
 public class RestaurantOrderingManagementApplication {
 
 	public static void main(String[] args) {
