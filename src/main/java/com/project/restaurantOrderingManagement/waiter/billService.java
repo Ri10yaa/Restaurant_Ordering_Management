@@ -12,6 +12,8 @@ import org.springframework.stereotype.Service;
 import com.project.restaurantOrderingManagement.repositories.logRepo;
 
 import java.io.*;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.*;
 
 //check for calculate amount function
@@ -104,14 +106,16 @@ public class billService {
             }
             double amt = calculateAmount(orders);
             System.out.println("Amount after close: " + amt);
-            Date date = new Date();
+            LocalDate today = LocalDate.now();
+            LocalTime currentTime = LocalTime.now();
 
             Log log = new Log();
             log.setAmount(amt);
             log.setFoodItems(orders);
             log.setBillNo(billNo);
             log.setWaiterCode(waiterCode);
-            log.setDate(date);
+            log.setDate(today);
+            log.setTime(currentTime);
             logRepo.save(log);
             redisTemplate.delete(key + billNo);
             return orders;

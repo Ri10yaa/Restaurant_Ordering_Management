@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-
+//done testing
 @RestController
 @RequestMapping("/{waitercode}")
 public class waiterController {
@@ -37,6 +37,7 @@ public class waiterController {
         return ResponseEntity.ok(billNo);
     }
     //close bill
+    // Request body contains billNo
     @PostMapping("/bill/close")
     public ResponseEntity<List<Order>> closeBill(@RequestBody Map<String, String> requestBody,@PathVariable("waitercode") String waitercode) throws IOException {
         List<Order> orders = billService.closeBill(waitercode,Long.parseLong(requestBody.get("billNo")));
