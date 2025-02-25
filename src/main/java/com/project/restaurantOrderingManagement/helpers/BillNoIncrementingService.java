@@ -12,7 +12,7 @@ public class  BillNoIncrementingService {
         this.redisTemplate = redisTemplate;
     }
     public void setBillNo() {
-        redisTemplate.opsForValue().set(BILL_NO, "0");
+        redisTemplate.opsForValue().set(BILL_NO, 0);
 
     }
 

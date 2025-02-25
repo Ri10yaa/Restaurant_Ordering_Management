@@ -19,9 +19,9 @@ public class tableAssignment {
 
     private String waiterKey = "waiterAssigned:";
 
-    RedisTemplate<String,String> redisTemplate;
+    RedisTemplate<String,Object> redisTemplate;
 
-    public tableAssignment(waiterAttendance waiterAttendance, RedisTemplate<String,String> redisTemplate, tableRepo tableRepo) {
+    public tableAssignment(waiterAttendance waiterAttendance, RedisTemplate<String,Object> redisTemplate, tableRepo tableRepo) {
         this.waiterAttendance = waiterAttendance;
         this.redisTemplate = redisTemplate;
         this.tableRepo = tableRepo;
@@ -48,7 +48,7 @@ public class tableAssignment {
 
                     String waiterCode = activeWaiters.get(i);
                     redisTemplate.delete(waiterKey + waiterCode);
-                    redisTemplate.opsForList().rightPushAll(waiterKey + waiterCode, Arrays.toString(tableRange.toArray()));
+                    redisTemplate.opsForList().rightPushAll(waiterKey + waiterCode, tableRange.toArray());
 
                     assignments.put(waiterCode, tableRange);
 
@@ -69,13 +69,13 @@ public class tableAssignment {
     List<Table> getTablesByWaiterCode(String waiterCode){
         try{
             String key = "waiterAssigned:" + waiterCode;
-            List<String> tables = redisTemplate.opsForList().range(key,0,-1);
+            List<Object> tables = redisTemplate.opsForList().range(key,0,-1);
             if(tables.isEmpty()|| tables==null){
                 throw new RuntimeException("Table not assigned to waiter");
             }
             List<Table> tableList = new ArrayList<>();
-            for (String tab : tables) {
-                Optional<Table> t = tableRepo.findById(Integer.parseInt(tab));
+            for (Object tab : tables) {
+                Optional<Table> t = tableRepo.findById(Integer.parseInt(tab.toString()));
                 tableList.add(t.orElseThrow(() -> new RuntimeException("Table not found: " + tab)));
             }
             return tableList;

@@ -30,7 +30,7 @@ public class loginService {
             return empRepo.findByEmpCodeAndEmpName(loginDTO.getCode(), loginDTO.getName());
         }
         catch(Exception e){
-            throw new RuntimeException("Login Failed");
+            throw new RuntimeException("Login Failed : " + e.getMessage());
         }
 
     }
