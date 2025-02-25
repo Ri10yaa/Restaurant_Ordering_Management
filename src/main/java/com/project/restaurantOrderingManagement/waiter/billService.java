@@ -81,6 +81,9 @@ public class billService {
     public long storeBill(String waitercode, String tableNo) throws IOException {
         try{
             long bill = billNoIncrementingService.incrementBillNo();
+            System.out.println("Bill No: " + bill);
+            System.out.println("TableNo: " + tableNo);
+            System.out.println("WaiterCode: " + waitercode);
             redisTemplate.opsForHash().put(key + bill,"billNo",String.valueOf(bill));
             redisTemplate.opsForHash().put(key + bill,"waiterCode",waitercode);
             redisTemplate.opsForHash().put(key + bill,"tableNo",tableNo);

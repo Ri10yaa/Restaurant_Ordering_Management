@@ -28,11 +28,14 @@ public class waiterController {
         return ResponseEntity.ok(tables);
     }
     //Create bill
+    //Give tableNo alone in response body
     @PostMapping("/bill/create")
     public ResponseEntity<Long> createBill(@RequestBody Map<String,String> requestBody,@PathVariable("waitercode") String waitercode) throws IOException {
         if (waitercode == null) {
             throw new IllegalArgumentException("waiterCode cannot be null or empty");
         }
+        System.out.println(requestBody);
+        System.out.println(waitercode);
         Long billNo = billService.storeBill(waitercode,requestBody.get("tableNo"));
         return ResponseEntity.ok(billNo);
     }
@@ -59,6 +62,7 @@ public class waiterController {
         }
     }
     //create order
+    // RequestBody "foodCode, quantity, status"
     @PostMapping("/order/{billno}")
     public ResponseEntity<Object> createOrder(@PathVariable String billno, @RequestBody Order order) throws IOException {
        try{
