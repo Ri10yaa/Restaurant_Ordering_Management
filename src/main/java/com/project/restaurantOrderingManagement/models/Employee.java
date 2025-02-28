@@ -11,8 +11,9 @@ public class Employee {
     @Id
  private String empCode;
  private String empName;
- private String empRole;
- private List<String> spec;
+ private String phNo;
+ private double salary;
+
 
     public Employee() {}
 
@@ -32,19 +33,19 @@ public class Employee {
         this.empName = empName;
     }
 
-    public String getEmpRole() {
-        return empRole;
+    public String getPhNo() {
+        return phNo;
     }
 
-    public void setEmpRole(String empRole) {
-        this.empRole = empRole;
+    public void setPhNo(String phNo) {
+        this.phNo = phNo;
     }
 
-    public List<String> getSpec() {
-        return spec;
+    public double getSalary() {
+        return salary;
     }
 
-    public void setSpec(List<String> spec) {
-        this.spec = spec;
+    public void setSalary(double salary) {
+        this.salary = salary;
     }
 }

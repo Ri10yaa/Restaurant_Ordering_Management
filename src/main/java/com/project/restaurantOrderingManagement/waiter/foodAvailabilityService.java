@@ -6,8 +6,9 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+
 import java.util.List;
-import java.util.Map;
+
 
 @Service
 public class foodAvailabilityService {
@@ -17,7 +18,7 @@ public class foodAvailabilityService {
     private static final Integer breakfastQty = 50;
     private static final Integer snacksQty = 40;
     private final foodRepo foodRepo;
-    private static final String key = "food:";
+    private static final String key = "foodAvailability";
 
     public foodAvailabilityService(RedisTemplate<String, Object> redisTemplate, foodRepo foodRepo) {
         this.redisTemplate = redisTemplate;
@@ -43,7 +44,7 @@ public class foodAvailabilityService {
                     quantity = breakfastQty;
                 }
                 System.out.println("Food code : " + food.getFoodCode() + "\nQuantity : " + quantity);
-                redisTemplate.opsForValue().set(key + food.getFoodCode(),quantity);
+                redisTemplate.opsForHash().put(key, food.getFoodCode(), String.valueOf(quantity));
             }
             System.out.println("Reset availability is complete.");
         }
@@ -55,40 +56,40 @@ public class foodAvailabilityService {
 
     public String updateAvailability(String foodCode, int quantity) {
         try {
-            Integer oldQuantity = (Integer) redisTemplate.opsForValue().get(key + foodCode);
-            if(oldQuantity != quantity) {
-                redisTemplate.opsForValue().set(key + foodCode, quantity);
+            if (Boolean.TRUE.equals(redisTemplate.opsForHash().hasKey(key, foodCode))) {
+                redisTemplate.opsForHash().put(key, foodCode, quantity);
+                System.out.println("Updated availability for " + foodCode + " to " + quantity);
+                return "Updated availability";
             }
-            else{
-                return "Already in same availability quantity";
-            }
-        }catch (Exception e){
-            throw new RuntimeException("Error updating availability" + e.getMessage());
+            return "Food code not found";
+        } catch (Exception e) {
+            throw new RuntimeException("Error updating availability: " + e.getMessage());
         }
-        return "Updated availability";
     }
 
     public Integer getAvailability(String foodCode) {
-        Integer availability = (Integer) redisTemplate.opsForValue().get(key + foodCode);
-        if (availability == null) {
-            return 0;
+        try {
+            Integer availability = (Integer) redisTemplate.opsForHash().get(key, foodCode);
+            return availability != null ? availability : 0;
+        } catch (Exception e) {
+            throw new RuntimeException("Error retrieving availability: " + e.getMessage());
         }
-        return availability;
     }
 
     public void decrementAvailability(String foodCode, int quantity) throws IOException {
-        Integer availability = (Integer) redisTemplate.opsForValue().get(key + foodCode);
-        System.out.println("Availability : " + availability);
+        Integer availability = (Integer) redisTemplate.opsForHash().get(key, foodCode);
         if (availability != null && availability >= quantity) {
-            redisTemplate.opsForValue().decrement(key + foodCode, quantity);
+            redisTemplate.opsForHash().put(key, foodCode, availability - quantity);
         } else {
-            System.out.println("Not availabilty");
             throw new IOException("Insufficient stock for " + foodCode);
         }
     }
 
     public void incrementAvailability(String foodCode, int quantity) {
-            redisTemplate.opsForValue().increment(key + foodCode, quantity);
+        Integer availability = (Integer) redisTemplate.opsForHash().get(key, foodCode);
+        if (availability != null) {
+            redisTemplate.opsForHash().put(key,foodCode, availability + quantity);
+        }
     }
 
 }
