@@ -3,6 +3,7 @@ package com.project.restaurantOrderingManagement.waiter;
 import com.project.restaurantOrderingManagement.models.Table;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -18,6 +19,8 @@ public class waiterController {
     billService billService;
     @Autowired
     OrderService orderService;
+    @Autowired
+    private SimpMessagingTemplate template;
     //fetch table
     @GetMapping("/fetchTables")
     public ResponseEntity<List<Table>> fetchTables(@PathVariable("waitercode") String waitercode) {
@@ -67,6 +70,8 @@ public class waiterController {
     public ResponseEntity<Object> createOrder(@PathVariable String billno, @RequestBody Order order) throws IOException {
        try{
            orderService.storeOrder(Long.parseLong(billno), order);
+           List<Order> updatedOrders = orderService.getOrders(Long.parseLong(billno));
+           template.convertAndSend("/topic/orders", order);
        }
        catch (Exception e){
            return ResponseEntity.status(500).body(e.getMessage());
@@ -79,6 +84,8 @@ public class waiterController {
         Order newOrder = null;
         try {
             newOrder = orderService.updateFoodItem(Long.parseLong(billno), order);
+            List<Order> updatedOrders = orderService.getOrders(Long.parseLong(billno));
+            template.convertAndSend("/topic/orders", newOrder);
         } catch (Exception e) {
              return ResponseEntity.status(500).body(e.getMessage());
         }
@@ -108,6 +115,7 @@ public class waiterController {
 
         try {
             String responseMessage = orderService.deleteOrder(Long.parseLong(billno), foodCode);
+            template.convertAndSend("/topic/orders/delete", foodCode);
             return ResponseEntity.ok(responseMessage);
         } catch (Exception e) {
             return ResponseEntity.status(500).body(e.getMessage());

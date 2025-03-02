@@ -69,27 +69,29 @@ public class foodAvailabilityService {
 
     public Integer getAvailability(String foodCode) {
         try {
-            Integer availability = (Integer) redisTemplate.opsForHash().get(key, foodCode);
-            return availability != null ? availability : 0;
+            Object availabilityObj = redisTemplate.opsForHash().get(key, foodCode);
+            return (availabilityObj != null) ? Integer.parseInt(availabilityObj.toString()) : 0;
         } catch (Exception e) {
             throw new RuntimeException("Error retrieving availability: " + e.getMessage());
         }
     }
 
     public void decrementAvailability(String foodCode, int quantity) throws IOException {
-        Integer availability = (Integer) redisTemplate.opsForHash().get(key, foodCode);
-        if (availability != null && availability >= quantity) {
-            redisTemplate.opsForHash().put(key, foodCode, availability - quantity);
+        System.out.println("Decrementing availability for " + foodCode + " by " + quantity);
+        Object food = redisTemplate.opsForHash().get(key, foodCode);
+        int availability = food != null ? Integer.parseInt(food.toString()) : 0;
+        System.out.println("Availability for " + foodCode + " is " + availability);
+        if (availability >= quantity) {
+            redisTemplate.opsForHash().put(key, foodCode, String.valueOf(availability - quantity));
         } else {
             throw new IOException("Insufficient stock for " + foodCode);
         }
     }
 
     public void incrementAvailability(String foodCode, int quantity) {
-        Integer availability = (Integer) redisTemplate.opsForHash().get(key, foodCode);
-        if (availability != null) {
-            redisTemplate.opsForHash().put(key,foodCode, availability + quantity);
-        }
+        Object availabilityObj = redisTemplate.opsForHash().get(key, foodCode);
+        int availability = (availabilityObj != null) ? Integer.parseInt(availabilityObj.toString()) : 0;
+        redisTemplate.opsForHash().put(key,foodCode, String.valueOf(availability + quantity));
     }
 
 }
