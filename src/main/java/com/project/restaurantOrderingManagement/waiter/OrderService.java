@@ -44,12 +44,14 @@ public class OrderService {
     public void storeOrder(long billno, Order order) throws IOException {
         try{
             String orderKey = key + billno + ":" + order.getFoodCode();
+            foodAvailabilityService.decrementAvailability(order.getFoodCode(),order.getQuantity());
             redisTemplate.opsForHash().put(key + billno + ":" + order.getFoodCode(),"quantity",String.valueOf(order.getQuantity()));
             redisTemplate.opsForHash().put(key + billno + ":" + order.getFoodCode(),"status",order.getStatus());
-            foodAvailabilityService.decrementAvailability(order.getFoodCode(),order.getQuantity());
             pushOrderToQueue(orderKey);
         }catch (Exception e){
-            throw new IOException("Order not inserted\n" + e.getMessage());
+            e.printStackTrace();
+            throw new IOException("Order not inserted\n" + e.getMessage(), e);
+
         }
 
     }
@@ -73,6 +75,7 @@ public class OrderService {
         orderToUpdate.setStatus("Deleted");
         this.updateFoodItem(billno, orderToUpdate);
 
+
         return "Order status updated to Deleted.";
     }
 
@@ -82,7 +85,7 @@ public class OrderService {
             if(orderData.isEmpty()){
                 throw new IOException("Order not found");
             }
-            Integer quantity = Integer.parseInt((String)orderData.get("quantity"));
+            int quantity = Integer.parseInt(orderData.get("quantity").toString());
             System.out.println("New quantity " + order.getQuantity());
             System.out.println("Old Quantity " + quantity);
             if(quantity < order.getQuantity()){
@@ -111,7 +114,7 @@ public class OrderService {
             List<Order> orders = new ArrayList<>();
             for (String key : keys) {
                 String foodCode = key.substring(key.lastIndexOf(":")+1);
-                int quantity = Integer.parseInt((String) redisTemplate.opsForHash().get(key, "quantity"));
+                int quantity = Integer.parseInt(redisTemplate.opsForHash().get(key, "quantity").toString());
                 String  status = (String) redisTemplate.opsForHash().get(key, "status");
                 orders.add(new Order(foodCode, quantity, status));
             }

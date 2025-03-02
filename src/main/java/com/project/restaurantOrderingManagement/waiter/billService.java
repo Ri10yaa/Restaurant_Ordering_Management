@@ -81,6 +81,7 @@ public class billService {
     public long storeBill(String waitercode, String tableNo) throws IOException {
         try{
             long bill = billNoIncrementingService.incrementBillNo();
+
             System.out.println("Bill No: " + bill);
             System.out.println("TableNo: " + tableNo);
             System.out.println("WaiterCode: " + waitercode);
@@ -90,7 +91,7 @@ public class billService {
             return bill;
         }
         catch(Exception e){
-            throw new RuntimeException("Error inserting bill" + e.getMessage());
+            throw new RuntimeException("Error inserting bill :" + e.getMessage());
         }
     }
 

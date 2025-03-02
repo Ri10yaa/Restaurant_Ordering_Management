@@ -1,5 +1,6 @@
 package com.project.restaurantOrderingManagement.kitchen;
 
+import com.project.restaurantOrderingManagement.service.ChefOrderService;
 import com.project.restaurantOrderingManagement.waiter.Order;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +16,8 @@ public class kitchenController {
 
     @Autowired
     private kitchenService kitchenService;
+    @Autowired
+    private ChefOrderService chefOrderService;
 
     @PostMapping("/{empCode}")
     public String updateOrderStatus(
@@ -35,7 +38,7 @@ public class kitchenController {
     @GetMapping("/{empCode}")
     public ResponseEntity<List<Order>> getChefOrders(@PathVariable String empCode) {
         try {
-            List<Order> orders = kitchenService.getOrders(empCode);
+            List<Order> orders = chefOrderService.getOrdersForChef(empCode);
             if (orders.isEmpty()) {
                 return ResponseEntity.ok(Collections.emptyList());
             }
@@ -49,13 +52,9 @@ public class kitchenController {
 //            } Test this controller and delete this portion after checking
 
             return ResponseEntity.ok(orders);
-        } catch (IOException e) {
+        } catch (Exception e) {
             return ResponseEntity.status(500).build();
         }
     }
 
-    @DeleteMapping("/{empcode}")
-    public ResponseEntity<String> deleteOrder(@PathVariable String empCode) {
-        return (ResponseEntity<String>) ResponseEntity.ok();
-    }
 }
