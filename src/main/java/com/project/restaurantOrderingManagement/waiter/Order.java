@@ -6,11 +6,28 @@ public class Order {
     String foodCode;
     int quantity;
     String status;
+    String chefCode;
+
+    public String getChefCode() {
+        return chefCode;
+    }
+
+    public void setChefCode(String chefCode) {
+        this.chefCode = chefCode;
+    }
+
+    public Order() {}
 
     public Order(String foodCode, int quantity, String status) {
         this.foodCode = foodCode;
         this.quantity = quantity;
         this.status = status;
+    }
+    public Order(String foodCode, int quantity, String status, String chefCode) {
+        this.foodCode = foodCode;
+        this.quantity = quantity;
+        this.status = status;
+        this.chefCode = chefCode;
     }
 
     public String getFoodCode() {

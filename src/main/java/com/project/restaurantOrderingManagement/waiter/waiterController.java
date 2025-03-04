@@ -19,8 +19,7 @@ public class waiterController {
     billService billService;
     @Autowired
     OrderService orderService;
-    @Autowired
-    private SimpMessagingTemplate template;
+
     //fetch table
     @GetMapping("/fetchTables")
     public ResponseEntity<List<Table>> fetchTables(@PathVariable("waitercode") String waitercode) {
@@ -71,7 +70,6 @@ public class waiterController {
        try{
            orderService.storeOrder(Long.parseLong(billno), order);
            List<Order> updatedOrders = orderService.getOrders(Long.parseLong(billno));
-           template.convertAndSend("/topic/orders", order);
        }
        catch (Exception e){
            return ResponseEntity.status(500).body(e.getMessage());
@@ -85,7 +83,6 @@ public class waiterController {
         try {
             newOrder = orderService.updateFoodItem(Long.parseLong(billno), order);
             List<Order> updatedOrders = orderService.getOrders(Long.parseLong(billno));
-            template.convertAndSend("/topic/orders", newOrder);
         } catch (Exception e) {
              return ResponseEntity.status(500).body(e.getMessage());
         }
@@ -115,7 +112,6 @@ public class waiterController {
 
         try {
             String responseMessage = orderService.deleteOrder(Long.parseLong(billno), foodCode);
-            template.convertAndSend("/topic/orders/delete", foodCode);
             return ResponseEntity.ok(responseMessage);
         } catch (Exception e) {
             return ResponseEntity.status(500).body(e.getMessage());

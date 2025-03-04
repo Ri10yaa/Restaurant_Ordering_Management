@@ -42,15 +42,22 @@ public class ChefOrderService {
 
         if (keys != null) {
             for (String key : keys) {
-                Order order = (Order) redisTemplate.opsForHash().entries(key);
-                Object assignedChef = redisTemplate.opsForHash().get(key, "chefCode");
+                Map<Object,Object> orderMap =  redisTemplate.opsForHash().entries(key);
+                Object assignedChef = orderMap.get("chefCode");
                 if (assignedChef != null && assignedChef.toString().equals(chefId)) {
+                    Order order = mapToOrder(orderMap);
                     assignedOrders.add(order);
                 }
             }
         }
         return assignedOrders;
     }
-
+    private Order mapToOrder(Map<Object, Object> orderMap) {
+        Order order = new Order();
+        order.setFoodCode(orderMap.get("foodCode").toString());
+        order.setQuantity(Integer.parseInt(orderMap.get("quantity").toString()));
+        order.setChefCode(orderMap.get("chefCode").toString());
+        return order;
+    }
 
 }
