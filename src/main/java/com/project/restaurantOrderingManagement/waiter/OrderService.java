@@ -29,6 +29,8 @@ public class OrderService {
     @Autowired
     private final queueService queueService;
     private final String key ="orders:bill:";
+    @Autowired
+    private OrderPublisher orderPublisher;
 
     public OrderService(RedisTemplate<String, Object> redisTemplate, logRepo logRepo, foodAvailabilityService foodAvailabilityService,queueService queueService) {
         this.redisTemplate = redisTemplate;
@@ -47,6 +49,7 @@ public class OrderService {
             foodAvailabilityService.decrementAvailability(order.getFoodCode(),order.getQuantity());
             redisTemplate.opsForHash().put(key + billno + ":" + order.getFoodCode(),"quantity",String.valueOf(order.getQuantity()));
             redisTemplate.opsForHash().put(key + billno + ":" + order.getFoodCode(),"status",order.getStatus());
+            orderPublisher.publishOrderUpdate(orderKey);
             pushOrderToQueue(orderKey);
         }catch (Exception e){
             e.printStackTrace();
@@ -73,6 +76,7 @@ public class OrderService {
 
         Order orderToUpdate = optionalOrder.get();
         orderToUpdate.setStatus("Deleted");
+        orderPublisher.publishOrderDelete(key + billno + ":" + orderToUpdate.getFoodCode());
         this.updateFoodItem(billno, orderToUpdate);
 
 
@@ -96,6 +100,7 @@ public class OrderService {
             }
             redisTemplate.opsForHash().put(key + billno + ":" + order.getFoodCode(),"quantity",String.valueOf(order.getQuantity()));
             redisTemplate.opsForHash().put(key + billno + ":" + order.getFoodCode(),"status",order.getStatus());
+            orderPublisher.publishOrderUpdate(key + billno + ":" + order.getFoodCode());
             return order;
         }
         catch (Exception e){
