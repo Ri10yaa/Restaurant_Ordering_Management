@@ -14,7 +14,7 @@ public class    billController {
     @Autowired
     private final billService billService;
 
-    public billController(com.project.restaurantOrderingManagement.waiter.billService billService) {
+    public billController(com.project.restaurantOrderingManagement.service.billService billService) {
         this.billService = billService;
     }
 

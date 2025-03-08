@@ -3,6 +3,7 @@ package com.project.restaurantOrderingManagement.service;
 import com.project.restaurantOrderingManagement.models.Chef;
 import com.project.restaurantOrderingManagement.repositories.empRepo;
 import com.project.restaurantOrderingManagement.waiter.Order;
+import com.project.restaurantOrderingManagement.waiter.OrderPublisher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -45,19 +46,15 @@ public class ChefOrderService {
                 Map<Object,Object> orderMap =  redisTemplate.opsForHash().entries(key);
                 Object assignedChef = orderMap.get("chefCode");
                 if (assignedChef != null && assignedChef.toString().equals(chefId)) {
-                    Order order = mapToOrder(orderMap);
+                    Order order = null;
+                    order = order.mapToOrder(orderMap);
+
                     assignedOrders.add(order);
                 }
             }
         }
         return assignedOrders;
     }
-    private Order mapToOrder(Map<Object, Object> orderMap) {
-        Order order = new Order();
-        order.setFoodCode(orderMap.get("foodCode").toString());
-        order.setQuantity(Integer.parseInt(orderMap.get("quantity").toString()));
-        order.setChefCode(orderMap.get("chefCode").toString());
-        return order;
-    }
+
 
 }

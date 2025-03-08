@@ -2,6 +2,8 @@ package com.project.restaurantOrderingManagement.waiter;
 
 import com.project.restaurantOrderingManagement.models.Food;
 
+import java.util.Map;
+
 public class Order {
     String foodCode;
     int quantity;
@@ -52,5 +54,13 @@ public class Order {
 
     public void setQuantity(int quantity) {
         this.quantity = quantity;
+    }
+
+    public Order mapToOrder(Map<Object, Object> orderMap) {
+        Order order = new Order();
+        order.setFoodCode(orderMap.get("foodCode").toString());
+        order.setQuantity(Integer.parseInt(orderMap.get("quantity").toString()));
+        order.setChefCode(orderMap.get("chefCode").toString());
+        return order;
     }
 }

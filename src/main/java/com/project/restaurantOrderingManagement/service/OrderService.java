@@ -1,20 +1,15 @@
-package com.project.restaurantOrderingManagement.waiter;
+package com.project.restaurantOrderingManagement.service;
 
-import com.project.restaurantOrderingManagement.models.Food;
 import com.project.restaurantOrderingManagement.repositories.logRepo;
-import com.project.restaurantOrderingManagement.service.foodService;
-import com.project.restaurantOrderingManagement.service.queueService;
-import lombok.RequiredArgsConstructor;
+import com.project.restaurantOrderingManagement.waiter.Order;
+import com.project.restaurantOrderingManagement.waiter.OrderPublisher;
+import com.project.restaurantOrderingManagement.waiter.foodAvailabilityService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.mongodb.core.aggregation.VariableOperators;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 
@@ -25,7 +20,7 @@ public class OrderService {
     @Autowired
     private final logRepo logRepo;
     @Autowired
-    private final foodAvailabilityService foodAvailabilityService;
+    private final com.project.restaurantOrderingManagement.waiter.foodAvailabilityService foodAvailabilityService;
     @Autowired
     private final queueService queueService;
     private final String key ="orders:bill:";
@@ -121,7 +116,8 @@ public class OrderService {
                 String foodCode = key.substring(key.lastIndexOf(":")+1);
                 int quantity = Integer.parseInt(redisTemplate.opsForHash().get(key, "quantity").toString());
                 String  status = (String) redisTemplate.opsForHash().get(key, "status");
-                orders.add(new Order(foodCode, quantity, status));
+                String chefCode = (String) redisTemplate.opsForHash().get(key, "chefCode");
+                orders.add(new Order(foodCode, quantity, status,chefCode));
             }
             for(Order order : orders){
                 System.out.println(order.getFoodCode());
@@ -148,6 +144,7 @@ public class OrderService {
                List<Order> closedOrders = new ArrayList<>();
                boolean canClose = true;
                for (Order order : orders) {
+                   System.out.println(order.getStatus());
                    if(order.getStatus().equalsIgnoreCase("served")){
                        closedOrders.add(order);
                    }
