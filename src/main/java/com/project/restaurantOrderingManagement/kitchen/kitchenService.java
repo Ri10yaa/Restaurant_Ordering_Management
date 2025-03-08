@@ -1,6 +1,7 @@
 package com.project.restaurantOrderingManagement.kitchen;
 
 import com.project.restaurantOrderingManagement.waiter.Order;
+import com.project.restaurantOrderingManagement.waiter.OrderPublisher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Async;
@@ -15,6 +16,8 @@ public class kitchenService {
 
     @Autowired
     private RedisTemplate<String, Object> redisTemplate;
+    @Autowired
+    private OrderPublisher orderPublisher;
 
 //    public void removeFoodItem(String chefCode, String billno) throws IOException {
 //        try {
@@ -47,6 +50,7 @@ public class kitchenService {
             TimeUnit.SECONDS.sleep(waitTime);
 
             redisTemplate.opsForHash().put(orderKey, "status", "Prepared");
+            orderPublisher.publishOrderUpdate(orderKey);
             System.out.println("Order " + billno + " marked as Prepared.");
 
 

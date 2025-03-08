@@ -66,7 +66,7 @@ public class tableAssignment {
 
     }
     //write function to fetch tables when waiter code is given
-    List<Table> getTablesByWaiterCode(String waiterCode){
+    public List<Table> getTablesByWaiterCode(String waiterCode){
         try{
             String key = "waiterAssigned:" + waiterCode;
             List<Object> tables = redisTemplate.opsForList().range(key,0,-1);

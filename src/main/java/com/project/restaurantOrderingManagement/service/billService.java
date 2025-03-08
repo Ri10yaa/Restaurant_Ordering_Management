@@ -1,12 +1,12 @@
-package com.project.restaurantOrderingManagement.waiter;
+package com.project.restaurantOrderingManagement.service;
 import com.project.restaurantOrderingManagement.exceptions.EntityNotFoundException;
 import com.project.restaurantOrderingManagement.helpers.BillNoIncrementingService;
 import com.project.restaurantOrderingManagement.models.Food;
 import com.project.restaurantOrderingManagement.models.Log;
 import com.project.restaurantOrderingManagement.repositories.foodRepo;
-import lombok.RequiredArgsConstructor;
+import com.project.restaurantOrderingManagement.waiter.Order;
+import com.project.restaurantOrderingManagement.waiter.billDTO;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.mongodb.core.aggregation.VariableOperators;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import com.project.restaurantOrderingManagement.repositories.logRepo;

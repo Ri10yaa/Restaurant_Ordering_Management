@@ -1,9 +1,10 @@
 package com.project.restaurantOrderingManagement.waiter;
 
 import com.project.restaurantOrderingManagement.models.Table;
+import com.project.restaurantOrderingManagement.service.OrderService;
+import com.project.restaurantOrderingManagement.service.billService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -14,7 +15,7 @@ import java.util.Map;
 @RequestMapping("/{waitercode}")
 public class waiterController {
     @Autowired
-    waiterService waiterService;
+    com.project.restaurantOrderingManagement.service.waiterService waiterService;
     @Autowired
     billService billService;
     @Autowired
@@ -88,6 +89,18 @@ public class waiterController {
         }
         return ResponseEntity.ok(newOrder);
     }
+
+    //update order status
+    @PostMapping("/order/{billno}/serve")
+    public ResponseEntity<Object> updateOrderStatus(@PathVariable("billno") String billno, @RequestBody Map<String,String> requestBody) throws IOException {
+        try {
+            String foodCode = requestBody.get("foodCode");
+            String msg = waiterService.updateOrderStatus(foodCode, Long.parseLong(billno));
+            return ResponseEntity.ok(msg);
+        }catch (Exception e){
+            return ResponseEntity.status(500).body(e.getMessage());
+        }
+    }
     //view order
     @GetMapping("/order/{billno}")
     public ResponseEntity<List<Order>> getOrders(@PathVariable("billno") String billno) throws IOException {
@@ -117,5 +130,4 @@ public class waiterController {
             return ResponseEntity.status(500).body(e.getMessage());
         }
     }
-    //
 }
