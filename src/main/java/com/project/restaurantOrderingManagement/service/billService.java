@@ -25,12 +25,15 @@ public class billService {
     private OrderService orderService;
     @Autowired
     private final foodRepo foodRepo;
+    @Autowired
+    private final tableStatusService tableStatusService;
 
-    public billService(com.project.restaurantOrderingManagement.repositories.logRepo logRepo, OrderService orderService, RedisTemplate<String, Object> redisTemplate, foodRepo foodRepo, BillNoIncrementingService billNoIncrementingService) {
+    public billService(com.project.restaurantOrderingManagement.repositories.logRepo logRepo, OrderService orderService, RedisTemplate<String, Object> redisTemplate, foodRepo foodRepo, com.project.restaurantOrderingManagement.service.tableStatusService tableStatusService, BillNoIncrementingService billNoIncrementingService) {
         this.logRepo = logRepo;
         this.orderService = orderService;
         this.redisTemplate = redisTemplate;
         this.foodRepo = foodRepo;
+        this.tableStatusService = tableStatusService;
         this.billNoIncrementingService = billNoIncrementingService;
     }
 
@@ -88,6 +91,7 @@ public class billService {
             redisTemplate.opsForHash().put(key + bill,"billNo",String.valueOf(bill));
             redisTemplate.opsForHash().put(key + bill,"waiterCode",waitercode);
             redisTemplate.opsForHash().put(key + bill,"tableNo",tableNo);
+            tableStatusService.markEngaged(Integer.parseInt(tableNo));
             return bill;
         }
         catch(Exception e){
@@ -101,6 +105,7 @@ public class billService {
         }
         try{
             List<Order> orders = orderService.closeOrder(billNo);
+            Integer table = (Integer) redisTemplate.opsForHash().get("bill:","tableNo");
             System.out.println("In bill service");
             for(Order order : orders){
                 System.out.println(order.getFoodCode());
@@ -122,6 +127,7 @@ public class billService {
             log.setTime(currentTime);
             logRepo.save(log);
             redisTemplate.delete(key + billNo);
+            tableStatusService.markVacant(table);
             return orders;
         }
         catch(Exception e){
@@ -132,7 +138,8 @@ public class billService {
 
     public String deleteBill(long billNo) {
         try{
-            Set<String> bill = redisTemplate.keys(key + billNo);
+            Set<String> bill = redisTemplate.keys(key + String.valueOf(billNo));
+            Integer table = Integer.parseInt((redisTemplate.opsForHash().get(key + String.valueOf(billNo), "tableNo").toString()));
             if(bill.isEmpty()){
                 throw new EntityNotFoundException("Bill not found");
             }
@@ -142,9 +149,11 @@ public class billService {
                     orderService.deleteOrder(billNo, order.getFoodCode());
                 }
                 redisTemplate.delete(key + billNo);
+                tableStatusService.markVacant(table);
                 return "Bill No " + billNo + " deleted";
             }
         } catch (Exception e) {
+            e.printStackTrace();
             throw new RuntimeException("Error in deleting bill" + e.getMessage());
         }
     }

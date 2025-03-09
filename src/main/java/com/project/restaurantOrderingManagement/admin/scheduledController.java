@@ -1,9 +1,9 @@
 package com.project.restaurantOrderingManagement.admin;
 
-import ch.qos.logback.core.status.Status;
 import com.project.restaurantOrderingManagement.helpers.BillNoIncrementingService;
-import com.project.restaurantOrderingManagement.waiter.foodAvailabilityService;
+import com.project.restaurantOrderingManagement.service.foodAvailabilityService;
 import com.project.restaurantOrderingManagement.waiter.tableAssignment;
+import com.project.restaurantOrderingManagement.service.tableStatusService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.ResponseEntity;
@@ -25,8 +25,10 @@ public class scheduledController {
     private RedisTemplate<String, Object> redisTemplate;
 
     private BillNoIncrementingService billNoIncrementingService;
+    @Autowired
+    private tableStatusService tableStatusService;
 
-    public scheduledController(com.project.restaurantOrderingManagement.waiter.tableAssignment tableAssignment, com.project.restaurantOrderingManagement.waiter.foodAvailabilityService foodAvailabilityService, BillNoIncrementingService billNoIncrementingService) {
+    public scheduledController(com.project.restaurantOrderingManagement.waiter.tableAssignment tableAssignment, com.project.restaurantOrderingManagement.service.foodAvailabilityService foodAvailabilityService, BillNoIncrementingService billNoIncrementingService) {
         this.tableAssignment = tableAssignment;
         this.foodAvailabilityService = foodAvailabilityService;
         this.billNoIncrementingService = billNoIncrementingService;
@@ -48,10 +50,11 @@ public class scheduledController {
         try{
             foodAvailabilityService.resetAvailability();
             billNoIncrementingService.setBillNo();
-            return ResponseEntity.ok().body("Food Availability reset");
+            tableStatusService.resetTableStatus();
+            return ResponseEntity.ok().body("Rest is successfull");
         }
         catch (Exception e){
-            return ResponseEntity.status(500).body("Error resetting food availability: " + e.getMessage());
+            return ResponseEntity.status(500).body("Error resetting redis: " + e.getMessage());
         }
     }
 

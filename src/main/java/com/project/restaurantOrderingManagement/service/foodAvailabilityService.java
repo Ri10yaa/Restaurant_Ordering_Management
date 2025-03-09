@@ -1,4 +1,4 @@
-package com.project.restaurantOrderingManagement.waiter;
+package com.project.restaurantOrderingManagement.service;
 
 import com.project.restaurantOrderingManagement.models.Food;
 import com.project.restaurantOrderingManagement.repositories.foodRepo;
