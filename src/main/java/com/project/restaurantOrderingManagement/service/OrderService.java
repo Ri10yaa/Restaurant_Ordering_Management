@@ -3,7 +3,6 @@ package com.project.restaurantOrderingManagement.service;
 import com.project.restaurantOrderingManagement.repositories.logRepo;
 import com.project.restaurantOrderingManagement.waiter.Order;
 import com.project.restaurantOrderingManagement.waiter.OrderPublisher;
-import com.project.restaurantOrderingManagement.waiter.foodAvailabilityService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -20,7 +19,7 @@ public class OrderService {
     @Autowired
     private final logRepo logRepo;
     @Autowired
-    private final com.project.restaurantOrderingManagement.waiter.foodAvailabilityService foodAvailabilityService;
+    private final com.project.restaurantOrderingManagement.service.foodAvailabilityService foodAvailabilityService;
     @Autowired
     private final queueService queueService;
     private final String key ="orders:bill:";
@@ -73,8 +72,6 @@ public class OrderService {
         orderToUpdate.setStatus("Deleted");
         orderPublisher.publishOrderDelete(key + billno + ":" + orderToUpdate.getFoodCode());
         this.updateFoodItem(billno, orderToUpdate);
-
-
         return "Order status updated to Deleted.";
     }
 
