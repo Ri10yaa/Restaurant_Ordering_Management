@@ -1,11 +1,7 @@
 package com.project.restaurantOrderingManagement.admin;
 
-import com.project.restaurantOrderingManagement.helpers.tableNoIncrementingService;
-import com.project.restaurantOrderingManagement.models.table;
-import com.project.restaurantOrderingManagement.repositories.tableRepo;
-import com.project.restaurantOrderingManagement.service.tableService;
+import com.project.restaurantOrderingManagement.models.Table;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,38 +13,39 @@ public class tableController {
     @Autowired
     ManagerService managerService;
     @Autowired
-    tableNoIncrementingService service;
+    private com.project.restaurantOrderingManagement.repositories.tableRepo tableRepo;
+
     public tableController(ManagerService managerService) {
         this.managerService = managerService;
     }
 
     @PostMapping
-    ResponseEntity<table> addTable(@RequestBody table table) {
-        table.setTableNo((Integer) service.incrementTableNo());
-        table t = managerService.addTableItem(table);
+    ResponseEntity<Table> addTable(@RequestBody Table table) {
+        table.setTableNo(tableRepo.findTopByOrderByTableNoDesc().getTableNo() + 1);
+        Table t = managerService.addTableItem(table);
         return ResponseEntity.ok(t);
     }
 
-//    @GetMapping("/{code}")
-//    ResponseEntity<List<table>> getTables(@PathVariable String code) {
-//        List<table> tables = managerService.getAllTables(code);
-//        return ResponseEntity.ok(tables);
-//    }
-
-    @DeleteMapping("/{tableNo}")
-    ResponseEntity<table> deleteTable(@PathVariable String tableNo) {
-        int tableNoInt = Integer.parseInt(tableNo);
-        managerService.removeTableItem(tableNoInt);
-        return ResponseEntity.noContent().build();
+    @GetMapping
+    ResponseEntity<List<Table>> getTables() {
+        List<Table> tables = managerService.getAllTables();
+        return ResponseEntity.ok(tables);
     }
 
-//    @PutMapping("/{tableNo}")
-//    ResponseEntity<table> updateTable(@PathVariable String tableNo, @RequestBody String code) {
-//        int tableNoInt = Integer.parseInt(tableNo);
-//        table t = managerService.updateTableItem(tableNoInt,code);
-//        return ResponseEntity.ok(t);
+    @DeleteMapping("/{tableNo}")
+    ResponseEntity<?> deleteTable(@PathVariable String tableNo) {
+        int tableNoInt = Integer.parseInt(tableNo);
+        managerService.removeTableItem(tableNoInt);
+        return ResponseEntity.ok("Deleted table No : " + tableNo);
+    }
 
-//    }
+    @PutMapping("/{tableNo}")
+    ResponseEntity<Table> updateTable(@PathVariable String tableNo, @RequestBody int seats) {
+        int tableNoInt = Integer.parseInt(tableNo);
+        Table t = managerService.updateTableItem(tableNoInt,seats);
+        return ResponseEntity.ok(t);
+
+    }
 
 
 }

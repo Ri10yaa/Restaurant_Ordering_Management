@@ -1,7 +1,9 @@
 package com.project.restaurantOrderingManagement.service;
 
-import com.project.restaurantOrderingManagement.models.Employee;
+import com.project.restaurantOrderingManagement.models.Chef;
 import com.project.restaurantOrderingManagement.repositories.empRepo;
+import com.project.restaurantOrderingManagement.waiter.Order;
+import com.project.restaurantOrderingManagement.waiter.OrderPublisher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -17,58 +19,42 @@ public class ChefOrderService {
     @Autowired
     private empRepo employeeRepository;
 
-    public String enqueueOrder(String foodCode, String quantity, String status, String billno) {
-        String cuisineSpec = getCuisineSpecFromFoodCode(foodCode);
-        List<Employee> chefs = employeeRepository.findByEmpRole("chef");
+    public String assignOrderToChef(String orderKey, String chefCode) {
+        if(Boolean.TRUE.equals(redisTemplate.hasKey(orderKey))) {
+            redisTemplate.opsForHash().put(orderKey, "chefCode", chefCode);
+            return "Order " + orderKey +" assigned to chef: " + chefCode;
+        }
+        else{
+            throw new RuntimeException("Order does not exist");
+        }
+    }
 
-        Employee assignedChef = null;
-        int minOrders = Integer.MAX_VALUE;
+    public String getChefForOrder(String billNo, String foodCode) {
+        String orderKey = "orders:billNo:" + billNo + ":" + foodCode;
 
-        // Find the chef with the least orders assigned
-        for (Employee chef : chefs) {
-            if (chef.getEmpCode().startsWith("C") && chef.getSpec().equals(cuisineSpec)) {
-                Set<Object> orders = redisTemplate.opsForHash().keys("chefOrders:" + chef.getEmpCode());
-                int currentOrderCount = orders.size();
+        Object chefId = redisTemplate.opsForHash().get(orderKey, "chefCode");
 
-                if (currentOrderCount < minOrders) {
-                    minOrders = currentOrderCount;
-                    assignedChef = chef;
+        return chefId != null ? chefId.toString() : "No chef assigned";
+    }
+
+    public List<Order> getOrdersForChef(String chefId) {
+        Set<String> keys = redisTemplate.keys("orders:bill:*");
+        List<Order> assignedOrders = new ArrayList<>();
+
+        if (keys != null) {
+            for (String key : keys) {
+                Map<Object,Object> orderMap =  redisTemplate.opsForHash().entries(key);
+                Object assignedChef = orderMap.get("chefCode");
+                if (assignedChef != null && assignedChef.toString().equals(chefId)) {
+                    Order order = null;
+                    order = order.mapToOrder(orderMap);
+
+                    assignedOrders.add(order);
                 }
             }
         }
-
-        if (assignedChef != null) {
-            // Use billno directly to create a unique key for each order under the same chef
-            String chefOrderKey = "chefOrders:" + assignedChef.getEmpCode() + ":" + billno;
-
-            // Check if the order already exists for the given billno
-            if (redisTemplate.hasKey(chefOrderKey)) {
-                return "Order with BillNo " + billno + " already exists for chef: " + assignedChef.getEmpCode();
-            }
-
-            // Store each order as a separate entry using the unique chefOrderKey
-            Map<String, String> orderDetails = new HashMap<>();
-            orderDetails.put("billno", billno);
-            orderDetails.put("foodCode", foodCode);
-            orderDetails.put("quantity", quantity);
-            orderDetails.put("status", status);
-
-            redisTemplate.opsForHash().putAll(chefOrderKey, orderDetails);
-
-            System.out.println("Order assigned to chef: " + assignedChef.getEmpCode() + ", BillNo: " + billno);
-            return "Order assigned to chef: " + assignedChef.getEmpCode() + ", BillNo: " + billno;
-        } else {
-            return "No suitable chef available.";
-        }
+        return assignedOrders;
     }
 
-    private String getCuisineSpecFromFoodCode(String foodCode) {
-        if (foodCode.startsWith("S")) {
-            return "South Indian";
-        } else if (foodCode.startsWith("N")) {
-            return "North Indian";
-        } else {
-            return "Other";
-        }
-    }
+
 }

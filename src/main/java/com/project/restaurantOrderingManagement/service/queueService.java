@@ -21,9 +21,11 @@ public class queueService {
     public void enqueue(String orderKey) {
         System.out.println("Enqueueing order with key: " + orderKey);
         orderQueue.add(orderKey);
-        String[] parts = orderKey.split(":");
-        String billNo = parts[2];
-        String assignedOrder = assignmentService.assign(orderKey,billNo);
+        String assignedOrder = assignmentService.assign(orderKey);
+        if(assignedOrder != null) {
+            System.out.println("Order assigned to chef: " + assignedOrder);
+            orderQueue.remove(orderKey);
+        }
     }
 
     public String dequeue() {

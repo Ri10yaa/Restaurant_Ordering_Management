@@ -21,9 +21,31 @@ public class loginService {
         this.waiterAttendance = waiterAttendance;
     }
 
-    public Employee authenticate(loginDTO loginDTO) {
-        LocalDateTime now = LocalDateTime.now();
-        waiterAttendance.makeAttendance(loginDTO.getCode(),now);
-        return empRepo.findByEmpCodeAndEmpName(loginDTO.getCode(), loginDTO.getName());
+    public Employee authenticate(loginDTO loginDTO) throws RuntimeException{
+        try{
+            LocalDateTime now = LocalDateTime.now();
+            if(loginDTO.getCode().substring(0, 1).equals("W")) {
+                waiterAttendance.makeAttendance(loginDTO.getCode(),now);
+            }
+            return empRepo.findByEmpCodeAndEmpName(loginDTO.getCode(), loginDTO.getName());
+        }
+        catch(Exception e){
+            throw new RuntimeException("Login Failed : " + e.getMessage());
+        }
+
+    }
+
+    public String logout(loginDTO loginDTO) throws RuntimeException{
+        try{
+            LocalDateTime now = LocalDateTime.now();
+            if(loginDTO.getCode().substring(0, 1).equals("W")) {
+                waiterAttendance.terminateAttendance(loginDTO.getCode(),now);
+            }
+            return "Logged out successfully";
+        }
+        catch(Exception e){
+            throw new RuntimeException("Logout Failed");
+        }
+
     }
 }

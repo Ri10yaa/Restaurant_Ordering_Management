@@ -4,12 +4,12 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Document(collection = "tables")
-public class table {
+public class  Table{
     @Id
     private Integer tableNo;
     private int noOfSeats;
 
-    public table() {}
+    public Table() {}
 
     public int getNoOfSeats() {
         return noOfSeats;
@@ -26,6 +26,4 @@ public class table {
     public void setTableNo(Integer tableNo) {
         this.tableNo = tableNo;
     }
-
-
 }

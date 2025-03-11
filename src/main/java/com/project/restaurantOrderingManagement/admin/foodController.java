@@ -32,8 +32,14 @@ public class foodController {
 
     @DeleteMapping("/{code}")
     public ResponseEntity<Food> deleteFood(@PathVariable String code) {
-        managerService.removeFoodItem(code);
-        return ResponseEntity.noContent().build();
+        try{
+            managerService.removeFoodItem(code);
+            return ResponseEntity.status(200).build();
+        }
+        catch(Exception e){
+            return ResponseEntity.noContent().build();
+        }
+
     }
 
 }

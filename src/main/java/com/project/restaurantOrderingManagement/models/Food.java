@@ -12,6 +12,7 @@ public class Food {
     private String category;
     private List<String> mealType;
     private double price;
+    private boolean veg;
     public Food() {}
 
     public String getCategory() {
@@ -48,6 +49,14 @@ public class Food {
     }
     public void setPrice(double price) {
         this.price = price;
+    }
+
+    public boolean isVeg() {
+        return veg;
+    }
+
+    public void setVegetarian(boolean veg) {
+        veg = veg;
     }
 
 }

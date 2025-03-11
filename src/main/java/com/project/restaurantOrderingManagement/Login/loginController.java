@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/login")
+@RequestMapping("/auth")
 public class loginController {
     @Autowired
     private final loginService loginService;
@@ -18,10 +18,16 @@ public class loginController {
         this.loginService = loginService;
     }
 
-    @PostMapping
+    @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody loginDTO loginDTO) {
          Employee emp = loginService.authenticate(loginDTO);
          return emp!=null ? ResponseEntity.ok(emp) : ResponseEntity.status(HttpStatus.NOT_FOUND).body("Employee does not exist!");
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(@RequestBody loginDTO loginDTO){
+        String log = loginService.logout(loginDTO);
+        return ResponseEntity.ok(log);
     }
 
 }
