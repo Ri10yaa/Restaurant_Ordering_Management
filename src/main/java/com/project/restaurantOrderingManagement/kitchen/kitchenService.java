@@ -54,15 +54,13 @@ public class kitchenService {
             }
 
             int quantity = Integer.parseInt(quantityObj.toString());
-            int waitTime = quantity * 2; // Delay calculation
+            int waitTime = quantity * 2;
 
             System.out.println("Updating status for BillNo " + billno + " after " + waitTime + " seconds...");
             TimeUnit.SECONDS.sleep(waitTime);
 
             redisTemplate.opsForHash().put(orderKey, "status", "Prepared");
             System.out.println("Order " + billno + " marked as Prepared.");
-
-            // Remove from chef orders after update
             removeChefOrder(chefOrderKeyPattern);
 
         } catch (InterruptedException e) {
@@ -71,7 +69,6 @@ public class kitchenService {
     }
 
     private void removeChefOrder(String chefOrderKeyPattern) {
-        // Find all chef orders related to this bill
         var keys = redisTemplate.keys(chefOrderKeyPattern);
         if (keys != null) {
             for (String key : keys) {
