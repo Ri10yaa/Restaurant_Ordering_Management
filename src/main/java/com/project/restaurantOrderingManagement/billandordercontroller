@@ -1,6 +1,52 @@
 package com.project.restaurantOrderingManagement.waiter;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+
+@RestController
+@RequestMapping("/bill")
+public class    billController {
+    @Autowired
+    private final billService billService;
+
+    public billController(com.project.restaurantOrderingManagement.service.billService billService) {
+        this.billService = billService;
+    }
+
+    @GetMapping("/{billno}")
+    public ResponseEntity<billDTO> getBill(@PathVariable String billno) throws IOException, ClassNotFoundException {
+        billDTO billDTO = billService.getBill(Long.parseLong(billno));
+        return ResponseEntity.ok(billDTO);
+    }
+//    @PostMapping("/create")
+//    public ResponseEntity<Long> createBill(@RequestBody billDTO bill) throws IOException {
+//        if (bill.getWaiterCode() == null || bill.getWaiterCode().isEmpty()) {
+//            throw new IllegalArgumentException("waiterCode cannot be null or empty");
+//        }
+//        System.out.println(bill.getWaiterCode());
+//        Long billNo = billService.storeBill(bill);
+//        return ResponseEntity.ok(billNo);
+//    }
+
+//    @GetMapping("/close")
+//    public ResponseEntity<List<Order>> closeBill(@RequestBody String billNo, @RequestBody Map<String, String> requestBody) {
+//        List<Order> orders = billService.closeBill(Long.parseLong(requestBody.get("billNo")));
+//        return ResponseEntity.ok().build();
+//
+//    }
+}
+
+
+
+
+package com.project.restaurantOrderingManagement.waiter;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

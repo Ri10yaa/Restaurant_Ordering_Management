@@ -16,9 +16,12 @@ public class foodCodeIncrementingService {
     }
 
     private String formatCode(long code) {
+
         return String.format("%03d", code);
     }
+
     public void setFoodCodeIncrementing() {
+
         redisTemplate.opsForValue().set(foodCodeIncrementing,"000");
     }
     public String getFoodCodeIncrementing() {
@@ -27,6 +30,9 @@ public class foodCodeIncrementingService {
         return formatCode(value);
     }
     public String incrementFoodCode() {
+        if(redisTemplate.keys(foodCodeIncrementing).isEmpty()) {
+            setFoodCodeIncrementing();
+        }
         long value = (long) redisTemplate.opsForValue().increment(foodCodeIncrementing, 1);
         return formatCode(value);
     }

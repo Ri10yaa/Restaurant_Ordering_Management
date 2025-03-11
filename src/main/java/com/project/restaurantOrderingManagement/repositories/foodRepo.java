@@ -6,4 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface foodRepo extends MongoRepository<Food,String> {
+    Food findTopByOrderByFoodCodeDesc();
 }

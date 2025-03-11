@@ -33,7 +33,9 @@ public class foodService {
         else if (food.getCategory().equalsIgnoreCase("chinese")) {
             code+="C";
         }
-        String num = foodCodeIncrementing.incrementFoodCode();
+        Food lastfood = foodRepo.findTopByOrderByFoodCodeDesc();
+        Integer num = Integer.parseInt(lastfood.getFoodCode().substring(1));
+        num++;
         return code+=num;
 
     }
@@ -74,6 +76,7 @@ public class foodService {
             item.setPrice(food.getPrice());
             item.setCategory(food.getCategory());
             item.setMealType(food.getMealType());
+            item.setVegetarian(food.isVeg());
             return foodRepo.save(item);
         }
         throw new EntityNotFoundException("Food item not found with ID: " + code);
