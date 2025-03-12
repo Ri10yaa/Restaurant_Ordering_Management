@@ -51,9 +51,10 @@ public class scheduledController {
             foodAvailabilityService.resetAvailability();
             billNoIncrementingService.setBillNo();
             tableStatusService.resetTableStatus();
-            return ResponseEntity.ok().body("Rest is successfull");
+            return ResponseEntity.ok().body("Reset is successfull");
         }
         catch (Exception e){
+            e.printStackTrace();
             return ResponseEntity.status(500).body("Error resetting redis: " + e.getMessage());
         }
     }

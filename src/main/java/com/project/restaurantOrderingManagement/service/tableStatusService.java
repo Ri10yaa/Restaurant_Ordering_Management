@@ -1,6 +1,6 @@
 package com.project.restaurantOrderingManagement.service;
 
-import com.project.restaurantOrderingManagement.models.Table;
+import com.project.restaurantOrderingManagement.models.table;
 import com.project.restaurantOrderingManagement.repositories.tableRepo;
 import com.project.restaurantOrderingManagement.waiter.tablePublisher;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -11,7 +11,7 @@ import java.util.List;
 @Service
 
 public class tableStatusService {
-    private final RedisTemplate<String,Object> redisTemplate;
+    public final RedisTemplate<String,Object> redisTemplate;
     private final String key = "tableStatus";
     private final tableRepo tableRepo;
     private final tablePublisher tablePublisher;
@@ -23,8 +23,8 @@ public class tableStatusService {
     }
 
     public void resetTableStatus(){
-        List<Table> tables = tableRepo.findAll();
-        for (Table table : tables) {
+        List<table> tables = tableRepo.findAll();
+        for (com.project.restaurantOrderingManagement.models.table table : tables) {
             redisTemplate.opsForHash().put(key, String.valueOf(table.getTableNo()),String.valueOf(0));
         }
     }
@@ -48,4 +48,23 @@ public class tableStatusService {
             System.err.println("Error while making vacant : " + e.getMessage());
         }
     }
+    public String getStatus(String tableNO) {
+        try {
+            String status = (redisTemplate.opsForHash().get(key, String.valueOf(tableNO)) != null) ? redisTemplate.opsForHash().get(key, String.valueOf(tableNO)).toString() : "Not Found";
+
+//            if (statusObj == null) {
+//                System.out.println("No status found for table " + tableNO);
+//                return "Not Found";  // Return a default value or handle it as needed
+//            }
+
+
+            System.out.println("The status of " + tableNO + " is " + status);
+            return status;
+        } catch (Exception e) {
+            System.err.println("Error while fetching status :( : " + e.getMessage());
+        }
+        return "";
+    }
+
 }
+
