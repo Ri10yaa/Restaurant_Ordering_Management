@@ -15,7 +15,7 @@ public class tablePublisher {
 
     public void publishTableUpdate(String tableNo) {
         try{
-            redisTemplate.convertAndSend(tableNo, tableUpdateTopic);
+            redisTemplate.convertAndSend(tableUpdateTopic.getTopic(),Integer.parseInt(tableNo));
             System.out.println("table updated : " + tableNo);
         }catch (Exception e){
             System.err.println("table update failed");

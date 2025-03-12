@@ -1,6 +1,6 @@
 package com.project.restaurantOrderingManagement.admin;
 
-import com.project.restaurantOrderingManagement.models.Table;
+import com.project.restaurantOrderingManagement.models.table;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,15 +20,15 @@ public class tableController {
     }
 
     @PostMapping
-    ResponseEntity<Table> addTable(@RequestBody Table table) {
+    ResponseEntity<table> addTable(@RequestBody table table) {
         table.setTableNo(tableRepo.findTopByOrderByTableNoDesc().getTableNo() + 1);
-        Table t = managerService.addTableItem(table);
+        com.project.restaurantOrderingManagement.models.table t = managerService.addTableItem(table);
         return ResponseEntity.ok(t);
     }
 
     @GetMapping
-    ResponseEntity<List<Table>> getTables() {
-        List<Table> tables = managerService.getAllTables();
+    ResponseEntity<List<table>> getTables() {
+        List<table> tables = managerService.getAllTables();
         return ResponseEntity.ok(tables);
     }
 
@@ -40,9 +40,9 @@ public class tableController {
     }
 
     @PutMapping("/{tableNo}")
-    ResponseEntity<Table> updateTable(@PathVariable String tableNo, @RequestBody int seats) {
+    ResponseEntity<table> updateTable(@PathVariable String tableNo, @RequestBody int seats) {
         int tableNoInt = Integer.parseInt(tableNo);
-        Table t = managerService.updateTableItem(tableNoInt,seats);
+        table t = managerService.updateTableItem(tableNoInt,seats);
         return ResponseEntity.ok(t);
 
     }

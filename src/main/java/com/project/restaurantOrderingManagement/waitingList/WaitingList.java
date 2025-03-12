@@ -10,14 +10,16 @@ public class WaitingList {
     private String name;
     private String phoneNumber;
     private int seatsRequired;
+    private boolean isOkToSplit; // Added field
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime timeOfEntry;
 
-    public WaitingList(String name, String phoneNumber, int seatsRequired, LocalDateTime timeOfEntry) {
+    public WaitingList(String name, String phoneNumber, int seatsRequired, boolean isOkToSplit, LocalDateTime timeOfEntry) {
         this.name = name;
         this.phoneNumber = phoneNumber;
         this.seatsRequired = seatsRequired;
+        this.isOkToSplit = isOkToSplit;
         this.timeOfEntry = timeOfEntry;
     }
 
@@ -43,6 +45,14 @@ public class WaitingList {
 
     public void setSeatsRequired(int seatsRequired) {
         this.seatsRequired = seatsRequired;
+    }
+
+    public boolean isOkToSplit() {
+        return isOkToSplit;
+    }
+
+    public void setOkToSplit(boolean okToSplit) {
+        isOkToSplit = okToSplit;
     }
 
     public LocalDateTime getTimeOfEntry() {

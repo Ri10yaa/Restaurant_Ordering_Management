@@ -1,9 +1,8 @@
 package com.project.restaurantOrderingManagement.service;
 
-import com.project.restaurantOrderingManagement.models.Table;
+import com.project.restaurantOrderingManagement.models.table;
 import com.project.restaurantOrderingManagement.waiter.Order;
 import com.project.restaurantOrderingManagement.waiter.OrderPublisher;
-import com.project.restaurantOrderingManagement.waiter.tableAssignment;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -22,9 +21,9 @@ public class waiterService {
 
     private String key = "orders:bill:";
 
-    public List<Table> fetchTables(String waiterCode) {
+    public List<table> fetchTables(String waiterCode) {
         try{
-            List<Table> tables = tableAssignment.getTablesByWaiterCode(waiterCode);
+            List<table> tables = tableAssignment.getTablesByWaiterCode(waiterCode);
             if(tables.isEmpty()){
                 return null;
             }

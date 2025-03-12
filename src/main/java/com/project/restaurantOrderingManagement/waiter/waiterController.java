@@ -1,6 +1,6 @@
 package com.project.restaurantOrderingManagement.waiter;
 
-import com.project.restaurantOrderingManagement.models.Table;
+import com.project.restaurantOrderingManagement.models.table;
 import com.project.restaurantOrderingManagement.service.OrderService;
 import com.project.restaurantOrderingManagement.service.billService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,8 +23,8 @@ public class waiterController {
 
     //fetch table
     @GetMapping("/fetchTables")
-    public ResponseEntity<List<Table>> fetchTables(@PathVariable("waitercode") String waitercode) {
-        List<Table> tables = waiterService.fetchTables(waitercode);
+    public ResponseEntity<List<table>> fetchTables(@PathVariable("waitercode") String waitercode) {
+        List<table> tables = waiterService.fetchTables(waitercode);
         if (tables.isEmpty()) {
             ResponseEntity.status(500).body("Tables not found");
         }

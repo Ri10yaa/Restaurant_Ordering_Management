@@ -1,6 +1,6 @@
 package com.project.restaurantOrderingManagement.waiter;
 
-import com.project.restaurantOrderingManagement.models.Table;
+import com.project.restaurantOrderingManagement.models.table;
 import com.project.restaurantOrderingManagement.repositories.tableRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -31,7 +31,7 @@ public class tableAssignment {
         Map<String, List<Integer>> assignments = new HashMap<>();
 
         try{
-            List<Table> tables = tableRepo.findAll();
+            List<table> tables = tableRepo.findAll();
             List<String> activeWaiters = waiterAttendance.getAllActiveWaiters();
 
             if (activeWaiters.size() >= 2 && !tables.isEmpty()) {
@@ -43,7 +43,7 @@ public class tableAssignment {
                     int tablesToAssign = baseTables + (i < remainingTables ? 1 : 0);
                     List<Integer> tableRange = tables.subList(pos, pos + tablesToAssign)
                             .stream()
-                            .map(Table::getTableNo)
+                            .map(table::getTableNo)
                             .collect(Collectors.toList());
 
                     String waiterCode = activeWaiters.get(i);
@@ -66,17 +66,17 @@ public class tableAssignment {
 
     }
     //write function to fetch tables when waiter code is given
-    public List<Table> getTablesByWaiterCode(String waiterCode){
+    public List<table> getTablesByWaiterCode(String waiterCode){
         try{
             String key = "waiterAssigned:" + waiterCode;
             List<Object> tables = redisTemplate.opsForList().range(key,0,-1);
             if(tables.isEmpty()|| tables==null){
-                throw new RuntimeException("Table not assigned to waiter");
+                throw new RuntimeException("table not assigned to waiter");
             }
-            List<Table> tableList = new ArrayList<>();
+            List<table> tableList = new ArrayList<>();
             for (Object tab : tables) {
-                Optional<Table> t = tableRepo.findById(Integer.parseInt(tab.toString()));
-                tableList.add(t.orElseThrow(() -> new RuntimeException("Table not found: " + tab)));
+                Optional<table> t = tableRepo.findById(Integer.parseInt(tab.toString()));
+                tableList.add(t.orElseThrow(() -> new RuntimeException("table not found: " + tab)));
             }
             return tableList;
         }
