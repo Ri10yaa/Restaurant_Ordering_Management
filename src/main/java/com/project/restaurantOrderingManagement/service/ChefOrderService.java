@@ -46,7 +46,7 @@ public class ChefOrderService {
                 Map<Object,Object> orderMap =  redisTemplate.opsForHash().entries(key);
                 Object assignedChef = orderMap.get("chefCode");
                 if (assignedChef != null && assignedChef.toString().equals(chefId)) {
-                    Order order = null;
+                    Order order = new Order();
                     order = order.mapToOrder(orderMap);
 
                     assignedOrders.add(order);

@@ -25,23 +25,31 @@ public class tableStatusService {
     public void resetTableStatus(){
         List<table> tables = tableRepo.findAll();
         for (com.project.restaurantOrderingManagement.models.table table : tables) {
-            redisTemplate.opsForHash().put(key, String.valueOf(table.getTableNo()),String.valueOf(0));
+            redisTemplate.opsForHash().put(key, String.valueOf(table.getTableNo()),String.valueOf(table.getNoOfSeats()));
         }
     }
 
-    public void markEngaged(int tableNo){
+    public void markEngaged(int tableNo, int seatsEngaged){
         try{
-            redisTemplate.opsForHash().put(key, String.valueOf(tableNo),String.valueOf(1));
-            tablePublisher.publishTableUpdate(String.valueOf(tableNo));
+            Integer seatsAvailable = Integer.parseInt(redisTemplate.opsForHash().get(key,String.valueOf(tableNo)).toString());
+            if(seatsAvailable < seatsEngaged){
+                System.out.println("Seats are not enough");
+            }
+            else{
+                redisTemplate.opsForHash().put(key, String.valueOf(tableNo),String.valueOf(seatsAvailable-seatsEngaged));
+                tablePublisher.publishTableUpdate(String.valueOf(tableNo));
+            }
+
         }
         catch (Exception e){
             System.err.println("Error while making engaged : " + e.getMessage());
         }
     }
 
-    public void markVacant(int tableNo){
+    public void markVacant(int tableNo,int seatsFreed){
         try{
-            redisTemplate.opsForHash().put(key, String.valueOf(tableNo),String.valueOf(0));
+            Integer seatsAvailable = Integer.parseInt(redisTemplate.opsForHash().get(key,String.valueOf(tableNo)).toString());
+            redisTemplate.opsForHash().put(key, String.valueOf(tableNo),String.valueOf(seatsAvailable+seatsFreed));
             tablePublisher.publishTableUpdate(String.valueOf(tableNo));
         }
         catch (Exception e){

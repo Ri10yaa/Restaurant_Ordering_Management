@@ -35,17 +35,24 @@ public class waiterService {
     }
 
     public String updateOrderStatus(String foodCode, long billno) {
-        Map<Object,Object> orderMap = redisTemplate.opsForHash().entries(key + billno + foodCode);
-        Order order = null;
-        order = order.mapToOrder(orderMap);
-        if(order.getStatus().equalsIgnoreCase("prepared")){
-            order.setStatus("served");
-            redisTemplate.opsForHash().put(key + billno + ":" + order.getFoodCode(),"status",order.getStatus());
-            orderPublisher.publishOrderUpdate((key + billno + ":" + order.getFoodCode()).toString());
-            return "Order status updated to served!";
-        }
-        else{
+        try{
+            Map<Object,Object> orderMap = redisTemplate.opsForHash().entries(key + billno + ":" +  foodCode);
+            Order order = new Order();
+            order = order.mapToOrder(orderMap);
+            System.out.println(order);
+            if(order!=null && order.getStatus().equalsIgnoreCase("prepared")){
+                order.setStatus("served");
+                redisTemplate.opsForHash().put(key + billno + ":" + foodCode,"status",order.getStatus());
+                orderPublisher.publishOrderUpdate((key + billno + ":" + foodCode).toString());
+                return "Order status updated to served!";
+            }
+            else{
+                return "Order status cannot be updated!";
+            }
+        }catch (Exception e){
+            e.printStackTrace();
             return "Order status cannot be updated!";
         }
     }
+
 }

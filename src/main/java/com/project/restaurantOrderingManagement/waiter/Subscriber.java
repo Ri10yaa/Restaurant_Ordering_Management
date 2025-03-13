@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Objects;
 
 @Component
-public class orderSubscriber implements MessageListener {
+public class Subscriber implements MessageListener {
     @Autowired
     private RedisTemplate<String, String> redisTemplate;
 
