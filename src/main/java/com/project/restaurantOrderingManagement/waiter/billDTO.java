@@ -7,14 +7,24 @@ public class billDTO {
     private long billNo;
     private String waiterCode;
     private int tableNo;
+    private int NoOfPersons;
 
-    public billDTO(long billNo, String waiterCode, int tableNo) {
+    public billDTO(long billNo, String waiterCode, int tableNo, int NoOfPersons) {
         this.billNo = billNo;
         this.waiterCode = waiterCode;
         this.tableNo = tableNo;
+        this.NoOfPersons = NoOfPersons;
     }
 
     public billDTO() {}
+
+    public int getNoOfPersons() {
+        return NoOfPersons;
+    }
+
+    public void setNoOfPersons(int noOfPersons) {
+        NoOfPersons = noOfPersons;
+    }
 
     public long getBillNo() {
         return billNo;

@@ -1,6 +1,6 @@
 package com.project.restaurantOrderingManagement.configuration;
 
-import com.project.restaurantOrderingManagement.waiter.orderSubscriber;
+import com.project.restaurantOrderingManagement.waiter.Subscriber;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -41,7 +41,7 @@ public class RedisConfig {
     }
 
     @Bean
-    public MessageListenerAdapter messageListenerAdapter(orderSubscriber subscriber) {
+    public MessageListenerAdapter messageListenerAdapter(Subscriber subscriber) {
         return new MessageListenerAdapter(subscriber);
     }
 

@@ -37,9 +37,7 @@ public class waiterController {
         if (waitercode == null) {
             throw new IllegalArgumentException("waiterCode cannot be null or empty");
         }
-        System.out.println(requestBody);
-        System.out.println(waitercode);
-        Long billNo = billService.storeBill(waitercode,requestBody.get("tableNo"));
+        Long billNo = billService.storeBill(waitercode,requestBody.get("tableNo"),requestBody.get("persons"));
         return ResponseEntity.ok(billNo);
     }
     //close bill

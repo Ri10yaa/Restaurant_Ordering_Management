@@ -58,8 +58,11 @@ public class Order {
 
     public Order mapToOrder(Map<Object, Object> orderMap) {
         Order order = new Order();
-        order.setFoodCode(orderMap.get("foodCode").toString());
+        for(Map.Entry<Object, Object> entry : orderMap.entrySet()) {
+            System.out.println(entry.getKey() + ": " + entry.getValue());
+        }
         order.setQuantity(Integer.parseInt(orderMap.get("quantity").toString()));
+        order.setStatus(orderMap.get("status").toString());
         order.setChefCode(orderMap.get("chefCode").toString());
         return order;
     }
