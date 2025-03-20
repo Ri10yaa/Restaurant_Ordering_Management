@@ -1,17 +1,15 @@
 package com.project.restaurantOrderingManagement.service;
 
 import com.project.restaurantOrderingManagement.admin.empInfo;
-import com.project.restaurantOrderingManagement.exceptions.DeleteOperationException;
-import com.project.restaurantOrderingManagement.exceptions.EntityNotFoundException;
+import com.project.restaurantOrderingManagement.exceptions.EmployeeNotFoundException;
+import com.project.restaurantOrderingManagement.exceptions.OrderNotFoundException;
 import com.project.restaurantOrderingManagement.models.*;
 import com.project.restaurantOrderingManagement.repositories.empRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.Random;
-import java.util.Arrays;
 
 @Service
 public class employeeService {
@@ -99,9 +97,8 @@ public class employeeService {
     }
 
     public Employee updateEmployee(String code, empInfo emp) {
-        Optional<Employee> employeeOptional = erepo.findById(code);
-        if (employeeOptional.isPresent()) {
-            Employee employee = employeeOptional.get();
+        Employee employee = erepo.findById(code).orElseThrow(() -> new EmployeeNotFoundException("Employee with " + code + "is not found"));
+
             String firstName = emp.getFirstName();
             String lastName = emp.getLastName();
             String fullName = firstName + " " + lastName;
@@ -133,35 +130,21 @@ public class employeeService {
                 // Handle unknown employee types (log an error, throw an exception)
                 throw new IllegalStateException("Unknown employee type for code: " + code);
             }
-        } else {
-            return null; // Or throw EntityNotFoundException
-        }
     }
 
 
 
     public void deleteEmployee(String code){
         if(erepo.existsById(code)) {
-            try{
                 erepo.deleteById(code);
-            }
-            catch(Exception e) {
-                throw new DeleteOperationException("Error while deleting employee with code " +code,e);
-            }
         }
         else{
-            throw new EntityNotFoundException("Employee with code "+code+" does not exist");
+            throw new EmployeeNotFoundException("Employee with code "+code+" does not exist");
         }
     }
 
-    public Employee getEmployee(String code){
-        Optional<Employee> emp = erepo.findById(code);
-        if(emp.isPresent()) {
-            return emp.get();
-        }
-        else{
-            return null;
-        }
+    public Optional<Employee> getEmployee(String code){
+        return  erepo.findById(code);
 
     }
 

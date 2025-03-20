@@ -1,5 +1,6 @@
 package com.project.restaurantOrderingManagement.waiter;
 
+import com.project.restaurantOrderingManagement.models.Log;
 import com.project.restaurantOrderingManagement.models.table;
 import com.project.restaurantOrderingManagement.service.OrderService;
 import com.project.restaurantOrderingManagement.service.billService;
@@ -40,28 +41,32 @@ public class waiterController {
         Long billNo = billService.storeBill(waitercode,requestBody.get("tableNo"),requestBody.get("persons"));
         return ResponseEntity.ok(billNo);
     }
+    //get bill
+    @GetMapping("/get/{billNo}")
+    public ResponseEntity<billDTO> getBill(@PathVariable("billNo") String billNo) throws IOException, ClassNotFoundException {
+        billDTO bill = billService.getBill(Long.parseLong(billNo));
+        return ResponseEntity.ok(bill);
+
+    }
     //close bill
     // Request body contains billNo
     @PostMapping("/bill/close")
-    public ResponseEntity<List<Order>> closeBill(@RequestBody Map<String, String> requestBody,@PathVariable("waitercode") String waitercode) throws IOException {
-        List<Order> orders = billService.closeBill(waitercode,Long.parseLong(requestBody.get("billNo")));
-        if(orders.isEmpty()) {
-            ResponseEntity.status(500).body("Orders not found");
-        }
-        return ResponseEntity.ok(orders);
+    public ResponseEntity<Log> closeBill(@RequestBody Map<String, String> requestBody,@PathVariable("waitercode") String waitercode) throws IOException {
+        Log l = billService.closeBill(waitercode,Long.parseLong(requestBody.get("billNo")));
+        return ResponseEntity.ok(l);
 
     }
     //delete bill
-    @DeleteMapping("/bill")
-    public ResponseEntity<?> deleteBill(@RequestBody Map<String,String> requestBody) throws IOException {
+    @DeleteMapping("/bill/{billNo}")
+    public ResponseEntity<?> deleteBill(@PathVariable("billNo") Long billNo) throws IOException {
         try{
-            Long bill = Long.parseLong(requestBody.get("billNo"));
-            String response = billService.deleteBill(bill);
+            String response = billService.deleteBill(billNo);
             return ResponseEntity.ok(response);
         }catch(Exception e){
             return ResponseEntity.status(500).body(e.getMessage());
         }
     }
+
     //create order
     // RequestBody "foodCode, quantity, status"
     @PostMapping("/order/{billno}")

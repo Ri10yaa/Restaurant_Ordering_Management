@@ -9,11 +9,11 @@ public class empInfo {
     private String lastName;
     private String date;
     private String role;
-    private List<String> spec;
+    private List<String> spec; // for chef
     private String phone;
     private String employmentType;
     private double salary;
-    private String dept;
+    private String dept; //for manager
 
     public String getDept() {
         return dept;

@@ -1,7 +1,6 @@
 package com.project.restaurantOrderingManagement.service;
 
-import com.project.restaurantOrderingManagement.exceptions.DeleteOperationException;
-import com.project.restaurantOrderingManagement.exceptions.EntityNotFoundException;
+import com.project.restaurantOrderingManagement.exceptions.OrderNotFoundException;
 import com.project.restaurantOrderingManagement.models.table;
 import com.project.restaurantOrderingManagement.repositories.tableRepo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,8 +40,8 @@ public class tableService {
                 tableRepo.save(t1);
                 return tableRepo.save(t1);
             }
-        }catch (EntityNotFoundException e) {
-            throw new EntityNotFoundException("table not found : " + e.getMessage());
+        }catch (OrderNotFoundException e) {
+            throw new OrderNotFoundException("table not found : " + e.getMessage());
         }
         return null;
     }
@@ -54,12 +53,12 @@ public class tableService {
                 tableRepo.deleteById(tableNo);
             }
             catch(Exception e) {
-                throw new DeleteOperationException("Error while deleting table",e);
+                throw new RuntimeException("Error while deleting table",e);
             }
 
         }
         else{
-            throw new EntityNotFoundException("table does not exist");
+            throw new OrderNotFoundException("table does not exist");
         }
     }
 

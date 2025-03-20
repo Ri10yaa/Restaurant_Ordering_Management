@@ -1,7 +1,7 @@
 package com.project.restaurantOrderingManagement.service;
 
-import com.project.restaurantOrderingManagement.exceptions.DeleteOperationException;
-import com.project.restaurantOrderingManagement.exceptions.EntityNotFoundException;
+import com.project.restaurantOrderingManagement.exceptions.FoodNotFoundException;
+import com.project.restaurantOrderingManagement.exceptions.OrderNotFoundException;
 import com.project.restaurantOrderingManagement.helpers.foodCodeIncrementingService;
 import com.project.restaurantOrderingManagement.models.Food;
 import com.project.restaurantOrderingManagement.repositories.foodRepo;
@@ -49,37 +49,29 @@ public class foodService {
         return foodRepo.findAll();
     }
 
-    public Food getFoodItem(String code) {
-        Food food = foodRepo.findById(code).get();
-        return food;
+    public Optional<Food> getFoodItem(String code) {
+        return foodRepo.findById(code);
     }
 
     public void deleteFoodItem(String code) {
         if(foodRepo.existsById(code)) {
-            try{
-                foodRepo.deleteById(code);
-            }
-            catch(Exception e) {
-                throw new DeleteOperationException("Error while deleting food item with code " +code,e);
-            }
+            foodRepo.deleteById(code);
         }
         else{
-            throw new EntityNotFoundException("Food item with code "+code+" does not exist");
+            throw new FoodNotFoundException("Food item with code "+code+" does not exist");
         }
     }
 
     public Food updateFoodItem(String code,Food food) {
-        Optional<Food> existingItem = foodRepo.findById(code);
-        if (existingItem.isPresent()) {
-            Food item = existingItem.get();
+        return foodRepo.findById(code).map(item -> {
             item.setFoodName(food.getFoodName());
             item.setPrice(food.getPrice());
             item.setCategory(food.getCategory());
             item.setMealType(food.getMealType());
             item.setVegetarian(food.isVeg());
             return foodRepo.save(item);
-        }
-        throw new EntityNotFoundException("Food item not found with ID: " + code);
+        }).orElseThrow(()-> new FoodNotFoundException("Food item with code "+code+" does not exist"));
+
     }
 
 }
