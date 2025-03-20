@@ -5,6 +5,7 @@ import com.project.restaurantOrderingManagement.waiter.Order;
 import com.project.restaurantOrderingManagement.waiter.OrderPublisher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -34,6 +35,7 @@ public class waiterService {
         }
     }
 
+    @Async
     public String updateOrderStatus(String foodCode, long billno) {
         try{
             Map<Object,Object> orderMap = redisTemplate.opsForHash().entries(key + billno + ":" +  foodCode);

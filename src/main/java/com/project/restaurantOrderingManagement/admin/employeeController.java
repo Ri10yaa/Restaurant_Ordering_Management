@@ -1,7 +1,9 @@
 package com.project.restaurantOrderingManagement.admin;
 
+import com.project.restaurantOrderingManagement.exceptions.EmployeeNotFoundException;
 import com.project.restaurantOrderingManagement.models.Employee;
 import com.project.restaurantOrderingManagement.repositories.empRepo;
+import org.springframework.data.mongodb.core.aggregation.VariableOperators;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -10,7 +12,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.springframework.http.ResponseEntity.ok;
-
+import java.util.Map;
 @RestController
 @RequestMapping("/manager/employee")
 public class employeeController {
@@ -35,18 +37,15 @@ public class employeeController {
     }
 
     @GetMapping("/{code}")
-    public ResponseEntity<Employee> getEmployee(@PathVariable("code") String code) {
-        Optional<Employee> emp = Optional.ofNullable(managerService.getStaff(code));
-        if(emp.isPresent()) {
-            return ResponseEntity.ok(emp.get());
-        }
-        return ResponseEntity.notFound().build();
+    public ResponseEntity<?> getEmployee(@PathVariable("code") String code) {
+        Employee emp = managerService.getStaff(code).orElseThrow( () -> new EmployeeNotFoundException("Employee " + code + " not found"));
+        return ResponseEntity.ok(emp);
     }
 
     @DeleteMapping("/{code}")
-    public ResponseEntity<Void> deleteEmployee(@PathVariable String code) {
+    public ResponseEntity<Void> deleteEmployee(@PathVariable("code") String code) {
         managerService.removeStaff(code);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.noContent().build();
     }
 
     @PutMapping("/{code}")

@@ -4,6 +4,7 @@ import com.project.restaurantOrderingManagement.models.table;
 import com.project.restaurantOrderingManagement.repositories.tableRepo;
 import com.project.restaurantOrderingManagement.waiter.tablePublisher;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -29,6 +30,7 @@ public class tableStatusService {
         }
     }
 
+    @Async
     public void markEngaged(int tableNo, int seatsEngaged){
         try{
             Integer seatsAvailable = Integer.parseInt(redisTemplate.opsForHash().get(key,String.valueOf(tableNo)).toString());
@@ -46,6 +48,7 @@ public class tableStatusService {
         }
     }
 
+    @Async
     public void markVacant(int tableNo,int seatsFreed){
         try{
             Integer seatsAvailable = Integer.parseInt(redisTemplate.opsForHash().get(key,String.valueOf(tableNo)).toString());
@@ -56,9 +59,10 @@ public class tableStatusService {
             System.err.println("Error while making vacant : " + e.getMessage());
         }
     }
-    public String getStatus(String tableNO) {
+
+    public String getStatus(String tableNo) {
         try {
-            String status = (redisTemplate.opsForHash().get(key, String.valueOf(tableNO)) != null) ? redisTemplate.opsForHash().get(key, String.valueOf(tableNO)).toString() : "Not Found";
+            String status = (redisTemplate.opsForHash().get(key, String.valueOf(tableNo)) != null) ? redisTemplate.opsForHash().get(key, String.valueOf(tableNo)).toString() : "Not Found";
 
 //            if (statusObj == null) {
 //                System.out.println("No status found for table " + tableNO);
@@ -66,7 +70,7 @@ public class tableStatusService {
 //            }
 
 
-            System.out.println("The status of " + tableNO + " is " + status);
+            System.out.println("The status of " + tableNo + " is " + status);
             return status;
         } catch (Exception e) {
             System.err.println("Error while fetching status :( : " + e.getMessage());

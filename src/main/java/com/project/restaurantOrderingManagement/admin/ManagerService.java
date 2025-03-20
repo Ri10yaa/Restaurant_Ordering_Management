@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class ManagerService {
@@ -38,7 +39,7 @@ public class ManagerService {
        return foodService.updateFoodItem(code, foodItem);
     }
 
-    public Food getFoodItem(String code) {
+    public Optional<Food> getFoodItem(String code) {
         return foodService.getFoodItem(code);
     }
 
@@ -54,7 +55,7 @@ public class ManagerService {
         return employeeService.updateEmployee(code,employee);
     }
 
-    public Employee getStaff(String code) {
+    public Optional<Employee> getStaff(String code) {
         return employeeService.getEmployee(code);
     }
 

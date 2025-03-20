@@ -42,15 +42,6 @@ public class kitchenController {
             if (orders.isEmpty()) {
                 return ResponseEntity.ok(Collections.emptyList());
             }
-
-//            StringBuilder orderDetails = new StringBuilder("Orders assigned to Chef " + empCode + ": \n");
-//            for (Order order : orders) {
-//                orderDetails.append("FoodCode: ").append(order.getFoodCode())
-//                        .append(", Quantity: ").append(order.getQuantity())
-//                        .append(", Status: ").append(order.getStatus())
-//                        .append("\n");
-//            } Test this controller and delete this portion after checking
-
             return ResponseEntity.ok(orders);
         } catch (Exception e) {
             return ResponseEntity.status(500).build();

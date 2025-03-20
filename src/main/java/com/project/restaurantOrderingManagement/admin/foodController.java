@@ -1,9 +1,11 @@
 package com.project.restaurantOrderingManagement.admin;
 
+import com.project.restaurantOrderingManagement.exceptions.FoodNotFoundException;
 import com.project.restaurantOrderingManagement.models.Food;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
+import java.util.List;
+import java.util.Map;
 @RestController
 @RequestMapping("/manager/food")
 public class foodController {
@@ -13,8 +15,8 @@ public class foodController {
     }
 
     @GetMapping("/{code}")
-    public ResponseEntity<Food> getFood(@PathVariable String code) {
-        Food food = managerService.getFoodItem(code);
+    public ResponseEntity<Food> getFood(@PathVariable("code") String code) {
+        Food food = managerService.getFoodItem(code).orElseThrow( () -> new FoodNotFoundException("Food with " +code+ " not found"));
         return ResponseEntity.ok(food);
     }
 
@@ -25,21 +27,15 @@ public class foodController {
     }
 
     @PutMapping("/{code}")
-    public ResponseEntity<Food> updateFood(@PathVariable String code, @RequestBody Food food) {
+    public ResponseEntity<Food> updateFood(@PathVariable("code") String code, @RequestBody Food food) {
         Food foodItem = managerService.updateFoodItem(code, food);
         return ResponseEntity.ok(foodItem);
     }
 
     @DeleteMapping("/{code}")
-    public ResponseEntity<Food> deleteFood(@PathVariable String code) {
-        try{
-            managerService.removeFoodItem(code);
-            return ResponseEntity.status(200).build();
-        }
-        catch(Exception e){
-            return ResponseEntity.noContent().build();
-        }
-
+    public ResponseEntity<Food> deleteFood(@PathVariable("code") String code) {
+        managerService.removeFoodItem(code);
+        return ResponseEntity.noContent().build();
     }
 
 }

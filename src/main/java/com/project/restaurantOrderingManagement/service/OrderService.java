@@ -5,6 +5,7 @@ import com.project.restaurantOrderingManagement.waiter.Order;
 import com.project.restaurantOrderingManagement.waiter.OrderPublisher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -22,9 +23,10 @@ public class OrderService {
     private final com.project.restaurantOrderingManagement.service.foodAvailabilityService foodAvailabilityService;
     @Autowired
     private final queueService queueService;
-    private final String key ="orders:bill:";
     @Autowired
     private OrderPublisher orderPublisher;
+
+    private final String key ="orders:bill:";
 
     public OrderService(RedisTemplate<String, Object> redisTemplate, logRepo logRepo, foodAvailabilityService foodAvailabilityService,queueService queueService) {
         this.redisTemplate = redisTemplate;
@@ -37,6 +39,7 @@ public class OrderService {
         queueService.enqueue(orderKey);
     }
 
+    @Async
     public void storeOrder(long billno, Order order) throws IOException {
         try{
             String orderKey = key + billno + ":" + order.getFoodCode();
@@ -52,6 +55,7 @@ public class OrderService {
         }
 
     }
+
     public String deleteOrder(long billno, String foodCode) throws IOException {
         List<Order> orders = Optional.ofNullable(this.getOrders(billno))
                 .orElse(Collections.emptyList());
@@ -75,6 +79,7 @@ public class OrderService {
         return "Order status updated to Deleted.";
     }
 
+    @Async
     public Order updateFoodItem(long billno, Order order) throws IOException {
         try{
             Map<Object,Object> orderData = redisTemplate.opsForHash().entries(key + billno + ":" + order.getFoodCode());
@@ -115,9 +120,6 @@ public class OrderService {
                 String  status = (String) redisTemplate.opsForHash().get(key, "status");
                 String chefCode = (String) redisTemplate.opsForHash().get(key, "chefCode");
                 orders.add(new Order(foodCode, quantity, status,chefCode));
-            }
-            for(Order order : orders){
-                System.out.println(order.getFoodCode());
             }
             return orders;
         }

@@ -1,5 +1,6 @@
 package com.project.restaurantOrderingManagement.service;
-import com.project.restaurantOrderingManagement.exceptions.EntityNotFoundException;
+import com.project.restaurantOrderingManagement.exceptions.BillNotFoundException;
+import com.project.restaurantOrderingManagement.exceptions.OrderNotFoundException;
 import com.project.restaurantOrderingManagement.helpers.BillNoIncrementingService;
 import com.project.restaurantOrderingManagement.models.Food;
 import com.project.restaurantOrderingManagement.models.Log;
@@ -8,6 +9,7 @@ import com.project.restaurantOrderingManagement.waiter.Order;
 import com.project.restaurantOrderingManagement.waiter.billDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import com.project.restaurantOrderingManagement.repositories.logRepo;
 
@@ -77,11 +79,11 @@ public class billService {
         int tableNo = Integer.parseInt((String) redisTemplate.opsForHash().get(key + billNo, "tableNo"));
         int persons = Integer.parseInt((String) redisTemplate.opsForHash().get(key + billNo, "NoOfPersons"));
         if(waitercode == null || tableNo == 0){
-            throw new EntityNotFoundException("Bill No is not found (redis)");
+            throw new BillNotFoundException("Bill No is not found (redis)");
         }
-        return new billDTO(billNo, waitercode, tableNo,persons);
+        return new billDTO(billNo, waitercode, tableNo, persons);
     }
-
+    @Async
     public long storeBill(String waitercode, String tableNo, String persons) throws IOException {
         try{
             long bill = billNoIncrementingService.incrementBillNo();
@@ -100,10 +102,10 @@ public class billService {
             throw new RuntimeException("Error inserting bill :" + e.getMessage());
         }
     }
-
-    public List<Order> closeBill(String waiterCode,long billNo) {
+    @Async
+    public Log closeBill(String waiterCode,long billNo) {
         if(!redisTemplate.hasKey(key + billNo)) {
-            throw new EntityNotFoundException("Bill not found");
+            throw new OrderNotFoundException("Bill not found");
         }
         try{
             List<Order> orders = orderService.closeOrder(billNo);
@@ -114,7 +116,7 @@ public class billService {
                 System.out.println(order.getFoodCode());
             }
             if(orders.isEmpty()){
-                throw new EntityNotFoundException("Orders are null");
+                throw new OrderNotFoundException("Orders are null");
             }
             double amt = calculateAmount(orders);
             System.out.println("Amount after close: " + amt);
@@ -137,7 +139,7 @@ public class billService {
                 System.out.println("Orders are empty");
             }
 
-            return orders;
+            return log;
         }
         catch(Exception e){
             throw new RuntimeException("Error while closing bill : " + e.getMessage());
@@ -151,7 +153,7 @@ public class billService {
             Integer table = Integer.parseInt((redisTemplate.opsForHash().get(key + String.valueOf(billNo), "tableNo").toString()));
             Integer persons = Integer.parseInt(redisTemplate.opsForHash().get(key + String.valueOf(billNo), "NoOfPersons").toString());
             if(bill.isEmpty()){
-                throw new EntityNotFoundException("Bill not found");
+                throw new OrderNotFoundException("Bill not found");
             }
             else{
                 List<Order> orders = orderService.getOrders(billNo);

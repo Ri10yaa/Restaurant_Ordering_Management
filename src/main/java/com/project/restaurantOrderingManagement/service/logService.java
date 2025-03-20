@@ -1,7 +1,6 @@
 package com.project.restaurantOrderingManagement.service;
 
-import com.project.restaurantOrderingManagement.exceptions.DeleteOperationException;
-import com.project.restaurantOrderingManagement.exceptions.EntityNotFoundException;
+import com.project.restaurantOrderingManagement.exceptions.OrderNotFoundException;
 import com.project.restaurantOrderingManagement.models.Log;
 import com.project.restaurantOrderingManagement.repositories.logRepo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,11 +40,11 @@ public class logService {
                 logRepo.deleteById(billno);
             }
             catch(Exception e) {
-                throw new DeleteOperationException("Error while deleting log with bill number " + billno,e);
+                throw new RuntimeException("Error while deleting log with bill number " + billno,e);
             }
         }
         else{
-            throw new EntityNotFoundException("Log with code "+billno+" does not exist");
+            throw new OrderNotFoundException("Log with code "+billno+" does not exist");
         }
     }
 
