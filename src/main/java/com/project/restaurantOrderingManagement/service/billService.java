@@ -75,12 +75,13 @@ public class billService {
     }
 
     public billDTO getBill(long billNo) throws ClassNotFoundException , IOException{
-        String waitercode = (String) redisTemplate.opsForHash().get(key + billNo, "waiterCode");
-        int tableNo = Integer.parseInt((String) redisTemplate.opsForHash().get(key + billNo, "tableNo"));
-        int persons = Integer.parseInt((String) redisTemplate.opsForHash().get(key + billNo, "NoOfPersons"));
-        if(waitercode == null || tableNo == 0){
-            throw new BillNotFoundException("Bill No is not found (redis)");
+        Map<Object,Object>  bill = redisTemplate.opsForHash().entries(key + billNo);
+        if(bill == null || bill.isEmpty()) {
+            throw new BillNotFoundException("Bill "+billNo+ "not found");
         }
+        String waitercode = (String) bill.get("waiterCode");
+        int tableNo = Integer.parseInt((String) bill.get("tableNo"));
+        int persons = Integer.parseInt((String) bill.get("NoOfPersons"));
         return new billDTO(billNo, waitercode, tableNo, persons);
     }
     @Async
@@ -105,7 +106,7 @@ public class billService {
     @Async
     public Log closeBill(String waiterCode,long billNo) {
         if(!redisTemplate.hasKey(key + billNo)) {
-            throw new OrderNotFoundException("Bill not found");
+            throw new BillNotFoundException("Bill not found");
         }
         try{
             List<Order> orders = orderService.closeOrder(billNo);
@@ -153,7 +154,7 @@ public class billService {
             Integer table = Integer.parseInt((redisTemplate.opsForHash().get(key + String.valueOf(billNo), "tableNo").toString()));
             Integer persons = Integer.parseInt(redisTemplate.opsForHash().get(key + String.valueOf(billNo), "NoOfPersons").toString());
             if(bill.isEmpty()){
-                throw new OrderNotFoundException("Bill not found");
+                throw new BillNotFoundException("Bill not found");
             }
             else{
                 List<Order> orders = orderService.getOrders(billNo);
