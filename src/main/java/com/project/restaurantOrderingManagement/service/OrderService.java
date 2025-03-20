@@ -1,5 +1,6 @@
 package com.project.restaurantOrderingManagement.service;
 
+import com.project.restaurantOrderingManagement.exceptions.OrderNotFoundException;
 import com.project.restaurantOrderingManagement.repositories.logRepo;
 import com.project.restaurantOrderingManagement.waiter.Order;
 import com.project.restaurantOrderingManagement.waiter.OrderPublisher;
@@ -61,7 +62,7 @@ public class OrderService {
                 .orElse(Collections.emptyList());
 
         if (orders.isEmpty()) {
-            throw new NoSuchElementException("No orders found.");
+            throw new OrderNotFoundException("No orders found.");
         }
 
         Optional<Order> optionalOrder = orders.stream()
@@ -69,7 +70,7 @@ public class OrderService {
                 .findFirst();
 
         if (!optionalOrder.isPresent()) {
-            throw new NoSuchElementException("Food item not found.");
+            throw new OrderNotFoundException("Food item not found in the order list.");
         }
 
         Order orderToUpdate = optionalOrder.get();
@@ -81,10 +82,9 @@ public class OrderService {
 
     @Async
     public Order updateFoodItem(long billno, Order order) throws IOException {
-        try{
             Map<Object,Object> orderData = redisTemplate.opsForHash().entries(key + billno + ":" + order.getFoodCode());
             if(orderData.isEmpty()){
-                throw new IOException("Order not found");
+                throw new OrderNotFoundException("Order not found\n");
             }
             int quantity = Integer.parseInt(orderData.get("quantity").toString());
             System.out.println("New quantity " + order.getQuantity());
@@ -99,19 +99,15 @@ public class OrderService {
             redisTemplate.opsForHash().put(key + billno + ":" + order.getFoodCode(),"status",order.getStatus());
             orderPublisher.publishOrderUpdate(key + billno + ":" + order.getFoodCode());
             return order;
-        }
-        catch (Exception e){
-            throw new IOException("Order not updated" + e.getMessage());
-        }
+
     }
 
 
     public List<Order> getOrders(long billno) throws IOException {
-        try{
             String pattern = key + billno + ":*";
             Set<String> keys = redisTemplate.keys(pattern);
             if(keys.isEmpty()){
-                return new ArrayList<>();
+                throw new OrderNotFoundException("Bill is either closed or not found");
             }
             List<Order> orders = new ArrayList<>();
             for (String key : keys) {
@@ -121,11 +117,8 @@ public class OrderService {
                 String chefCode = (String) redisTemplate.opsForHash().get(key, "chefCode");
                 orders.add(new Order(foodCode, quantity, status,chefCode));
             }
+
             return orders;
-        }
-        catch (Exception e){
-            throw new IOException(e.getMessage());
-        } 
     }
 
     public List<Order> closeOrder(long billno) throws RuntimeException {
@@ -134,7 +127,7 @@ public class OrderService {
            List<Order> orders = getOrders(billno);
            System.out.println("List of orders");
            if(orders.isEmpty()){
-                throw new RuntimeException("Order not found");
+                throw new OrderNotFoundException("Order not found");
            }
            else{
                for(Order order : orders){
@@ -162,7 +155,5 @@ public class OrderService {
             throw new RuntimeException("Failed to retrieve orders");
         }
     }
-
-
 
 }
