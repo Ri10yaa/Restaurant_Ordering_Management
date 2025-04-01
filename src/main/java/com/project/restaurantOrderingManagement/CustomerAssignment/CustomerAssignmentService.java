@@ -2,6 +2,8 @@ package com.project.restaurantOrderingManagement.CustomerAssignment;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.project.restaurantOrderingManagement.repositories.tableRepo;
+import com.project.restaurantOrderingManagement.service.tableStatusService;
 import com.project.restaurantOrderingManagement.waitingList.WaitingList;
 import com.project.restaurantOrderingManagement.waitingList.WaitingListService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,7 +11,7 @@ import org.springframework.data.redis.core.ListOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+import java.util.*;
 
 @Service
 public class CustomerAssignmentService {
@@ -18,49 +20,89 @@ public class CustomerAssignmentService {
     private RedisTemplate<String, String> redisTemplate;
 
     @Autowired
+    private tableRepo  tableRepo;
+    @Autowired
     private WaitingListService waitingListService;
+
+    @Autowired
+    private tableStatusService statusService;
 
     @Autowired
     private ObjectMapper objectMapper;
 
     private static final String WAITING_LIST_KEY = "waitingList";
+    private static final String TABLE_STATUS_KEY = "tableStatus";
 
-    public void assignCustomerToTable(String tableNo) {
-        ListOperations<String, String> listOps = redisTemplate.opsForList();
-        List<String> waitingListEntries = listOps.range(WAITING_LIST_KEY, 0, -1);
+    private List<String> findFreeTables(int seats) {
+        Map<String, Integer> tableStatus = statusService.getTableStatus();
+        List<String> availableTables = new ArrayList<>();
+        int freeSeats = 0;
 
-        if (waitingListEntries == null || waitingListEntries.isEmpty()) {
-            System.out.println("No customers in the waiting list.");
-            return;
-        }
-
-        for (String entryJson : waitingListEntries) {
-            try {
-                WaitingList customer = objectMapper.readValue(entryJson, WaitingList.class);
-
-                int tableSize = getTableSize(tableNo);
-
-                if (customer.getSeatsRequired() <= tableSize) {
-                    // Assign customer to table
-                    System.out.println("Assigning " + customer.getName() + " to table " + tableNo);
-
-                    // Remove customer from waiting list
-                    waitingListService.removeFromWaitingList(entryJson);
-                    return;
-                }
-            } catch (JsonProcessingException e) {
-                System.err.println("Error parsing waiting list entry: " + e.getMessage());
+        for (Map.Entry<String, Integer> entry : tableStatus.entrySet()) {
+            if (entry.getValue() > 0 && freeSeats < seats) {
+                availableTables.add(entry.getKey());
+                freeSeats += entry.getValue();
             }
         }
 
-        System.out.println("No suitable customer found for table " + tableNo);
+        if (freeSeats >= seats) {
+            System.out.println("Found split tables: " + availableTables);
+            return availableTables;
+        }
+
+        return Collections.emptyList();
     }
 
-    private int getTableSize(String tableNo) {
-        // Example logic for table sizes
-        if (tableNo.contains("2")) return 2;
-        if (tableNo.contains("4")) return 4;
-        if (tableNo.contains("6")) return 6;
-        return 4; // Default to 4-seater
+    // Allocate tables for waiting list customers
+    public void allocateTablesFromWaitingList(String freedTableNo, int freedSeats) {
+        List<WaitingList> waitingList = waitingListService.getWaitingList();
+        Map<String, Integer> tableStatus = statusService.getTableStatus();
+        
+        if (waitingList.isEmpty()) {
+            System.out.println("Waiting list is empty. No customers to allocate.");
+            return;
+        }
+
+        System.out.println("Processing waiting list for table allocation...");
+        for (WaitingList customer : new ArrayList<>(waitingList)) {
+            int seatsRequired = customer.getSeatsRequired();
+
+            if (seatsRequired <= tableStatus.getOrDefault(freedTableNo, 0)) {
+                System.out.println("Allocating table " + freedTableNo + " to " + customer.getName());
+                statusService.updateTableStatus(freedTableNo, tableStatus.get(freedTableNo) - seatsRequired);
+                try {
+                    waitingListService.removeFromWaitingList(objectMapper.writeValueAsString(customer));
+                } catch (JsonProcessingException e) {
+                    System.err.println("Error removing from waiting list: " + e.getMessage());
+                }
+                return;
+            } else if (customer.isOkToSplit()) {
+                List<String> splitTables = findFreeTables(seatsRequired);
+                if (!splitTables.isEmpty()) {
+                    System.out.println("Allocating split tables " + splitTables + " to " + customer.getName());
+                    int remainingSeats = seatsRequired;
+
+                    for (String table : splitTables) {
+                        int availableSeats = tableStatus.get(table);
+                        int seatsToAllocate = Math.min(availableSeats, remainingSeats);
+                        statusService.updateTableStatus(table, availableSeats - seatsToAllocate);
+                        remainingSeats -= seatsToAllocate;
+                        if (remainingSeats == 0) break;
+                    }
+
+                    try {
+                        waitingListService.removeFromWaitingList(objectMapper.writeValueAsString(customer));
+                    } catch (JsonProcessingException e) {
+                        System.err.println("Error removing from waiting list: " + e.getMessage());
+                    }
+                    return;
+                } else {
+                    System.out.println("No suitable split tables found for " + customer.getName());
+                }
+            } else {
+                System.out.println("Customer " + customer.getName() + " cannot be accommodated.");
+            }
+        }
     }
+
 }

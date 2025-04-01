@@ -7,6 +7,7 @@ import com.project.restaurantOrderingManagement.models.Log;
 import com.project.restaurantOrderingManagement.repositories.foodRepo;
 import com.project.restaurantOrderingManagement.waiter.Order;
 import com.project.restaurantOrderingManagement.waiter.billDTO;
+import jakarta.validation.constraints.Null;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Async;
@@ -153,16 +154,18 @@ public class billService {
             Set<String> bill = redisTemplate.keys(key + String.valueOf(billNo));
             Integer table = Integer.parseInt((redisTemplate.opsForHash().get(key + String.valueOf(billNo), "tableNo").toString()));
             Integer persons = Integer.parseInt(redisTemplate.opsForHash().get(key + String.valueOf(billNo), "NoOfPersons").toString());
-            if(bill.isEmpty()){
+            if(bill.isEmpty() || table == null || persons == null){
                 throw new BillNotFoundException("Bill not found");
             }
             else{
                 List<Order> orders = orderService.getOrders(billNo);
-                for(Order order : orders){
-                    orderService.deleteOrder(billNo, order.getFoodCode());
+                if(orders != null){
+                    for(Order order : orders){
+                        orderService.deleteOrder(billNo, order.getFoodCode());
+                    }
                 }
-                redisTemplate.delete(key + billNo);
                 tableStatusService.markVacant(table,persons);
+                redisTemplate.delete(key + billNo);
                 return "Bill No " + billNo + " deleted";
             }
         } catch (Exception e) {

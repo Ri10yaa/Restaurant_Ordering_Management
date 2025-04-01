@@ -7,7 +7,9 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 
@@ -62,21 +64,29 @@ public class tableStatusService {
 
     public String getStatus(String tableNo) {
         try {
-            String status = (redisTemplate.opsForHash().get(key, String.valueOf(tableNo)) != null) ? redisTemplate.opsForHash().get(key, String.valueOf(tableNo)).toString() : "Not Found";
-
-//            if (statusObj == null) {
-//                System.out.println("No status found for table " + tableNO);
-//                return "Not Found";  // Return a default value or handle it as needed
-//            }
-
-
-            System.out.println("The status of " + tableNo + " is " + status);
-            return status;
+            table t = tableRepo.findById(Integer.parseInt(tableNo)).get();
+            String seatsFree = (redisTemplate.opsForHash().get(key, String.valueOf(tableNo)) != null) ? redisTemplate.opsForHash().get(key, String.valueOf(tableNo)).toString() : "Not Found";
+            return seatsFree;
         } catch (Exception e) {
             System.err.println("Error while fetching status :( : " + e.getMessage());
         }
         return "";
     }
+
+   public Map<String, Integer> getTableStatus() {
+       Map<Object, Object> entries = redisTemplate.opsForHash().entries(key);
+       Map<String, Integer> tableStatus = new HashMap<>();
+       for (Map.Entry<Object, Object> entry : entries.entrySet()) {
+           tableStatus.put(entry.getKey().toString(), Integer.parseInt(entry.getValue().toString()));
+       }
+       return tableStatus;
+   }
+
+    public void updateTableStatus(String tableNo, int noOfFreeSeats) {
+        redisTemplate.opsForHash().put(key, tableNo, String.valueOf(noOfFreeSeats));
+        System.out.println("Updated table " + tableNo + " with free seats: " + noOfFreeSeats);
+    }
+
 
 }
 

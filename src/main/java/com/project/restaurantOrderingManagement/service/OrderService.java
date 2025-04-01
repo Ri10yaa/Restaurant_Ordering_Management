@@ -107,7 +107,7 @@ public class OrderService {
             String pattern = key + billno + ":*";
             Set<String> keys = redisTemplate.keys(pattern);
             if(keys.isEmpty()){
-                throw new OrderNotFoundException("Bill is either closed or not found");
+              return null;
             }
             List<Order> orders = new ArrayList<>();
             for (String key : keys) {
