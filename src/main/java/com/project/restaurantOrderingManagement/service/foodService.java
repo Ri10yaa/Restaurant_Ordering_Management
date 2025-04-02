@@ -4,10 +4,13 @@ import com.project.restaurantOrderingManagement.exceptions.FoodNotFoundException
 import com.project.restaurantOrderingManagement.exceptions.OrderNotFoundException;
 import com.project.restaurantOrderingManagement.helpers.foodCodeIncrementingService;
 import com.project.restaurantOrderingManagement.models.Food;
+import com.project.restaurantOrderingManagement.models.foodWithAvailability;
 import com.project.restaurantOrderingManagement.repositories.foodRepo;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,6 +20,8 @@ public class foodService {
     foodRepo foodRepo;
     @Autowired
     private final foodCodeIncrementingService foodCodeIncrementing;
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
 
     public foodService(foodCodeIncrementingService foodCodeIncrementing) {
         this.foodCodeIncrementing = foodCodeIncrementing;
@@ -73,5 +78,20 @@ public class foodService {
         }).orElseThrow(()-> new FoodNotFoundException("Food item with code "+code+" does not exist"));
 
     }
+    public List<foodWithAvailability> searchFoodByCodeOrName(String keyword) {
+        List<Food> searchResults = foodRepo.findByFoodCodeOrName(keyword);
 
+        if (searchResults.isEmpty()) {
+            throw new FoodNotFoundException("No food items found for the keyword: " + keyword);
+        }
+
+        // Transform Food objects into FoodWithAvailability objects
+        List<foodWithAvailability> resultsWithAvailability = new ArrayList<>();
+        searchResults.forEach(food -> {
+            Object availability = redisTemplate.opsForHash().get("foodAvailability", food.getFoodCode());
+            resultsWithAvailability.add(new foodWithAvailability(food, Integer.parseInt(availability.toString())));
+        });
+
+        return resultsWithAvailability;
+    }
 }
