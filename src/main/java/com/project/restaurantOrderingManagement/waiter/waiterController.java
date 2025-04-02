@@ -1,9 +1,13 @@
 package com.project.restaurantOrderingManagement.waiter;
 
+import com.project.restaurantOrderingManagement.exceptions.FoodNotFoundException;
+import com.project.restaurantOrderingManagement.models.Food;
 import com.project.restaurantOrderingManagement.models.Log;
+import com.project.restaurantOrderingManagement.models.foodWithAvailability;
 import com.project.restaurantOrderingManagement.models.table;
 import com.project.restaurantOrderingManagement.service.OrderService;
 import com.project.restaurantOrderingManagement.service.billService;
+import com.project.restaurantOrderingManagement.service.foodService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,6 +25,8 @@ public class waiterController {
     billService billService;
     @Autowired
     OrderService orderService;
+    @Autowired
+    foodService foodService;
 
     //fetch table
     @GetMapping("/fetchTables")
@@ -79,6 +85,16 @@ public class waiterController {
            return ResponseEntity.status(500).body(e.getMessage());
        }
         return ResponseEntity.ok().build();
+    }
+
+    //search food
+    @GetMapping("/search")
+    public List<foodWithAvailability> searchFood(@RequestParam String keyword) {
+        try {
+            return foodService.searchFoodByCodeOrName(keyword);
+        } catch (FoodNotFoundException e) {
+            throw new FoodNotFoundException(e.getMessage());
+        }
     }
     //update order
     @PutMapping("/order/{billno}")
