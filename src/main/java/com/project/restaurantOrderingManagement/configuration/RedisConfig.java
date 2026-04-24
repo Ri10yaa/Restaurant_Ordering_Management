@@ -7,18 +7,19 @@ import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
-import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 @Configuration
 public class RedisConfig {
+
     @Bean
     public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory redisConnectionFactory) {
         RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
         StringRedisSerializer stringRedisSerializer = new StringRedisSerializer();
+
         redisTemplate.setConnectionFactory(redisConnectionFactory);
-        redisTemplate.setKeySerializer(new StringRedisSerializer());
+        redisTemplate.setKeySerializer(stringRedisSerializer);
         redisTemplate.setValueSerializer(new GenericJackson2JsonRedisSerializer());
         redisTemplate.setHashKeySerializer(stringRedisSerializer);
         redisTemplate.setHashValueSerializer(stringRedisSerializer);
@@ -41,21 +42,16 @@ public class RedisConfig {
     }
 
     @Bean
-    public MessageListenerAdapter messageListenerAdapter(Subscriber subscriber) {
-        return new MessageListenerAdapter(subscriber);
-    }
-
-    @Bean
-    public RedisMessageListenerContainer redisMessageListenerContainer(
-            RedisConnectionFactory connectionFactory,
-            MessageListenerAdapter messageListenerAdapter,ChannelTopic orderUpdateTopic,ChannelTopic orderDeleteTopic, ChannelTopic tableUpdateTopic) {
-
+    public RedisMessageListenerContainer redisMessageListenerContainer(RedisConnectionFactory connectionFactory,
+                                                                       Subscriber subscriber,
+                                                                       ChannelTopic orderUpdateTopic,
+                                                                       ChannelTopic orderDeleteTopic,
+                                                                       ChannelTopic tableUpdateTopic) {
         RedisMessageListenerContainer container = new RedisMessageListenerContainer();
         container.setConnectionFactory(connectionFactory);
-        container.addMessageListener(messageListenerAdapter,orderUpdateTopic);
-        container.addMessageListener(messageListenerAdapter,orderDeleteTopic);
-        container.addMessageListener(messageListenerAdapter,tableUpdateTopic);
+        container.addMessageListener(subscriber, orderUpdateTopic);
+        container.addMessageListener(subscriber, orderDeleteTopic);
+        container.addMessageListener(subscriber, tableUpdateTopic);
         return container;
     }
-
 }

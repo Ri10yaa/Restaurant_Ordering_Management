@@ -1,22 +1,15 @@
 package com.project.restaurantOrderingManagement.waiter;
 
-import com.project.restaurantOrderingManagement.models.Food;
+import com.project.restaurantOrderingManagement.exceptions.BadRequestException;
 
 import java.util.Map;
 
 public class Order {
-    String foodCode;
-    int quantity;
-    String status;
-    String chefCode;
-
-    public String getChefCode() {
-        return chefCode;
-    }
-
-    public void setChefCode(String chefCode) {
-        this.chefCode = chefCode;
-    }
+    private String foodCode;
+    private int quantity;
+    private String status;
+    private String chefCode;
+    private String billNo;
 
     public Order() {}
 
@@ -25,6 +18,7 @@ public class Order {
         this.quantity = quantity;
         this.status = status;
     }
+
     public Order(String foodCode, int quantity, String status, String chefCode) {
         this.foodCode = foodCode;
         this.quantity = quantity;
@@ -40,14 +34,6 @@ public class Order {
         this.foodCode = foodCode;
     }
 
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
     public int getQuantity() {
         return quantity;
     }
@@ -56,14 +42,55 @@ public class Order {
         this.quantity = quantity;
     }
 
-    public Order mapToOrder(Map<Object, Object> orderMap) {
-        Order order = new Order();
-        for(Map.Entry<Object, Object> entry : orderMap.entrySet()) {
-            System.out.println(entry.getKey() + ": " + entry.getValue());
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getChefCode() {
+        return chefCode;
+    }
+
+    public void setChefCode(String chefCode) {
+        this.chefCode = chefCode;
+    }
+
+    public String getBillNo() {
+        return billNo;
+    }
+
+    public void setBillNo(String billNo) {
+        this.billNo = billNo;
+    }
+
+    public static Order mapToOrder(Map<Object, Object> orderMap, String foodCode) {
+        return mapToOrder(orderMap, foodCode, null);
+    }
+
+    public static Order mapToOrder(Map<Object, Object> orderMap, String foodCode, String billNo) {
+        if (orderMap == null || orderMap.isEmpty()) {
+            throw new BadRequestException("Order map is empty");
         }
-        order.setQuantity(Integer.parseInt(orderMap.get("quantity").toString()));
-        order.setStatus(orderMap.get("status").toString());
-        order.setChefCode(orderMap.get("chefCode").toString());
+
+        Order order = new Order();
+        order.setFoodCode(foodCode);
+        order.setBillNo(billNo);
+
+        Object quantityObj = orderMap.get("quantity");
+        Object statusObj = orderMap.get("status");
+        Object chefCodeObj = orderMap.get("chefCode");
+
+        if (quantityObj == null || statusObj == null) {
+            throw new BadRequestException("Order data is incomplete in Redis");
+        }
+
+        order.setQuantity(Integer.parseInt(quantityObj.toString()));
+        order.setStatus(statusObj.toString());
+        order.setChefCode(chefCodeObj != null ? chefCodeObj.toString() : null);
+
         return order;
     }
 }

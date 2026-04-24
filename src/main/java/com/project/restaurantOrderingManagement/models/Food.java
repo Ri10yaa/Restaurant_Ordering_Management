@@ -1,4 +1,5 @@
 package com.project.restaurantOrderingManagement.models;
+
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -13,7 +14,24 @@ public class Food {
     private List<String> mealType;
     private double price;
     private boolean veg;
+
     public Food() {}
+
+    public String getFoodCode() {
+        return foodCode;
+    }
+
+    public void setFoodCode(String foodCode) {
+        this.foodCode = foodCode;
+    }
+
+    public String getFoodName() {
+        return foodName;
+    }
+
+    public void setFoodName(String foodName) {
+        this.foodName = foodName;
+    }
 
     public String getCategory() {
         return category;
@@ -21,19 +39,6 @@ public class Food {
 
     public void setCategory(String category) {
         this.category = category;
-    }
-
-    public String getFoodCode() {
-        return foodCode;
-    }
-    public void setFoodCode(String foodCode) {
-        this.foodCode = foodCode;
-    }
-    public String getFoodName() {
-        return foodName;
-    }
-    public void setFoodName(String foodName) {
-        this.foodName = foodName;
     }
 
     public List<String> getMealType() {
@@ -47,6 +52,7 @@ public class Food {
     public double getPrice() {
         return price;
     }
+
     public void setPrice(double price) {
         this.price = price;
     }
@@ -56,7 +62,6 @@ public class Food {
     }
 
     public void setVegetarian(boolean veg) {
-        veg = veg;
+        this.veg = veg;
     }
-
 }

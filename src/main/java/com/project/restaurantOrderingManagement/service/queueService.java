@@ -1,7 +1,6 @@
 package com.project.restaurantOrderingManagement.service;
 
 import com.project.restaurantOrderingManagement.kitchen.AssignmentService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.LinkedList;
@@ -13,17 +12,14 @@ public class queueService {
     private final Queue<String> orderQueue = new LinkedList<>();
     private final AssignmentService assignmentService;
 
-    @Autowired
     public queueService(AssignmentService assignmentService) {
         this.assignmentService = assignmentService;
     }
 
     public void enqueue(String orderKey) {
-        System.out.println("Enqueueing order with key: " + orderKey);
         orderQueue.add(orderKey);
-        String assignedOrder = assignmentService.assign(orderKey);
-        if(assignedOrder != null) {
-            System.out.println("Order assigned to chef: " + assignedOrder);
+        String assignmentResult = assignmentService.assign(orderKey);
+        if (assignmentResult != null && !assignmentResult.isBlank() && !assignmentResult.startsWith("No chef")) {
             orderQueue.remove(orderKey);
         }
     }

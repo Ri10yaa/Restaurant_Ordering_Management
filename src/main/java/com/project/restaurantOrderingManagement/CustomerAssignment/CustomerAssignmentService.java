@@ -2,36 +2,30 @@ package com.project.restaurantOrderingManagement.CustomerAssignment;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.project.restaurantOrderingManagement.repositories.tableRepo;
 import com.project.restaurantOrderingManagement.service.tableStatusService;
 import com.project.restaurantOrderingManagement.waitingList.WaitingList;
 import com.project.restaurantOrderingManagement.waitingList.WaitingListService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.ListOperations;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 @Service
 public class CustomerAssignmentService {
 
-    @Autowired
-    private RedisTemplate<String, String> redisTemplate;
+    private final WaitingListService waitingListService;
+    private final tableStatusService statusService;
+    private final ObjectMapper objectMapper;
 
-    @Autowired
-    private tableRepo  tableRepo;
-    @Autowired
-    private WaitingListService waitingListService;
-
-    @Autowired
-    private tableStatusService statusService;
-
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    private static final String WAITING_LIST_KEY = "waitingList";
-    private static final String TABLE_STATUS_KEY = "tableStatus";
+    public CustomerAssignmentService(WaitingListService waitingListService,
+                                     tableStatusService statusService,
+                                     ObjectMapper objectMapper) {
+        this.waitingListService = waitingListService;
+        this.statusService = statusService;
+        this.objectMapper = objectMapper;
+    }
 
     private List<String> findFreeTables(int seats) {
         Map<String, Integer> tableStatus = statusService.getTableStatus();
@@ -45,64 +39,54 @@ public class CustomerAssignmentService {
             }
         }
 
-        if (freeSeats >= seats) {
-            System.out.println("Found split tables: " + availableTables);
-            return availableTables;
-        }
-
-        return Collections.emptyList();
+        return freeSeats >= seats ? availableTables : Collections.emptyList();
     }
 
-    // Allocate tables for waiting list customers
     public void allocateTablesFromWaitingList(String freedTableNo, int freedSeats) {
         List<WaitingList> waitingList = waitingListService.getWaitingList();
-        Map<String, Integer> tableStatus = statusService.getTableStatus();
-        
         if (waitingList.isEmpty()) {
-            System.out.println("Waiting list is empty. No customers to allocate.");
             return;
         }
 
-        System.out.println("Processing waiting list for table allocation...");
+        Map<String, Integer> tableStatus = statusService.getTableStatus();
+
         for (WaitingList customer : new ArrayList<>(waitingList)) {
             int seatsRequired = customer.getSeatsRequired();
+            int seatsInFreedTable = tableStatus.getOrDefault(freedTableNo, 0);
 
-            if (seatsRequired <= tableStatus.getOrDefault(freedTableNo, 0)) {
-                System.out.println("Allocating table " + freedTableNo + " to " + customer.getName());
-                statusService.updateTableStatus(freedTableNo, tableStatus.get(freedTableNo) - seatsRequired);
-                try {
-                    waitingListService.removeFromWaitingList(objectMapper.writeValueAsString(customer));
-                } catch (JsonProcessingException e) {
-                    System.err.println("Error removing from waiting list: " + e.getMessage());
-                }
+            if (seatsRequired <= seatsInFreedTable) {
+                statusService.updateTableStatus(freedTableNo, seatsInFreedTable - seatsRequired);
+                removeFromWaitingList(customer);
                 return;
-            } else if (customer.isOkToSplit()) {
+            }
+
+            if (customer.isOkToSplit()) {
                 List<String> splitTables = findFreeTables(seatsRequired);
                 if (!splitTables.isEmpty()) {
-                    System.out.println("Allocating split tables " + splitTables + " to " + customer.getName());
                     int remainingSeats = seatsRequired;
 
-                    for (String table : splitTables) {
-                        int availableSeats = tableStatus.get(table);
+                    for (String tableNo : splitTables) {
+                        int availableSeats = tableStatus.get(tableNo);
                         int seatsToAllocate = Math.min(availableSeats, remainingSeats);
-                        statusService.updateTableStatus(table, availableSeats - seatsToAllocate);
+                        statusService.updateTableStatus(tableNo, availableSeats - seatsToAllocate);
                         remainingSeats -= seatsToAllocate;
-                        if (remainingSeats == 0) break;
+                        if (remainingSeats == 0) {
+                            break;
+                        }
                     }
 
-                    try {
-                        waitingListService.removeFromWaitingList(objectMapper.writeValueAsString(customer));
-                    } catch (JsonProcessingException e) {
-                        System.err.println("Error removing from waiting list: " + e.getMessage());
-                    }
+                    removeFromWaitingList(customer);
                     return;
-                } else {
-                    System.out.println("No suitable split tables found for " + customer.getName());
                 }
-            } else {
-                System.out.println("Customer " + customer.getName() + " cannot be accommodated.");
             }
         }
     }
 
+    private void removeFromWaitingList(WaitingList customer) {
+        try {
+            waitingListService.removeFromWaitingList(objectMapper.writeValueAsString(customer));
+        } catch (JsonProcessingException ignored) {
+            // best effort removal by serialized value; ignoring if conversion fails
+        }
+    }
 }

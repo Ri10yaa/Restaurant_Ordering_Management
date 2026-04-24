@@ -1,7 +1,6 @@
 package com.project.restaurantOrderingManagement.waitingList;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -10,18 +9,20 @@ import java.util.List;
 @RequestMapping("/waiting-list")
 public class WaitingListController {
 
-    @Autowired
-    private WaitingListService waitingListService;
+    private final WaitingListService waitingListService;
+
+    public WaitingListController(WaitingListService waitingListService) {
+        this.waitingListService = waitingListService;
+    }
 
     @PostMapping("/add")
-    public String addToWaitingList(@RequestBody WaitingList request) throws JsonProcessingException {
-        System.out.println("Received request: " + request);
+    public ResponseEntity<String> addToWaitingList(@RequestBody WaitingList request) {
         waitingListService.addToWaitingList(request);
-        return "Added to waiting list: " + request;
+        return ResponseEntity.ok("Customer added to waiting list");
     }
 
     @GetMapping
-    public List<WaitingList> getWaitingList() {
-        return waitingListService.getWaitingList();
+    public ResponseEntity<List<WaitingList>> getWaitingList() {
+        return ResponseEntity.ok(waitingListService.getWaitingList());
     }
 }

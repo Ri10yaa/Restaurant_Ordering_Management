@@ -1,30 +1,23 @@
 package com.project.restaurantOrderingManagement.service;
 
-import com.project.restaurantOrderingManagement.exceptions.OrderNotFoundException;
+import com.project.restaurantOrderingManagement.exceptions.TableNotFoundException;
 import com.project.restaurantOrderingManagement.models.table;
 import com.project.restaurantOrderingManagement.repositories.tableRepo;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class tableService {
-    @Autowired
-    tableRepo tableRepo;
-    @Autowired
-    RedisTemplate redisTemplate;
+
+    private final tableRepo tableRepo;
+
+    public tableService(tableRepo tableRepo) {
+        this.tableRepo = tableRepo;
+    }
 
     public List<table> getAllTables() {
-       try{
-           List<table> tables = tableRepo.findAll();
-           return tables;
-       } catch (Exception e) {
-           throw new RuntimeException("Error in fetching all tables " + e.getMessage());
-       }
-
+        return tableRepo.findAll();
     }
 
     public table addTable(table table) {
@@ -32,34 +25,17 @@ public class tableService {
     }
 
     public table updateTable(int tableNo, int seats) {
-        try{
-            Optional<table> t = tableRepo.findById(tableNo);
-            if(t.isPresent()) {
-                table t1 = t.get();
-                t1.setNoOfSeats(seats);
-                tableRepo.save(t1);
-                return tableRepo.save(t1);
-            }
-        }catch (OrderNotFoundException e) {
-            throw new OrderNotFoundException("table not found : " + e.getMessage());
-        }
-        return null;
+        table existing = tableRepo.findById(tableNo)
+                .orElseThrow(() -> new TableNotFoundException("Table " + tableNo + " not found"));
+
+        existing.setNoOfSeats(seats);
+        return tableRepo.save(existing);
     }
 
     public void deleteTable(int tableNo) {
-        Optional<table> existingItem = tableRepo.findById(tableNo);
-        if(existingItem.isPresent()) {
-            try{
-                tableRepo.deleteById(tableNo);
-            }
-            catch(Exception e) {
-                throw new RuntimeException("Error while deleting table",e);
-            }
-
+        if (!tableRepo.existsById(tableNo)) {
+            throw new TableNotFoundException("Table " + tableNo + " does not exist");
         }
-        else{
-            throw new OrderNotFoundException("table does not exist");
-        }
+        tableRepo.deleteById(tableNo);
     }
-
 }

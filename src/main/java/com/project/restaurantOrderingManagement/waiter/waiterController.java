@@ -1,152 +1,106 @@
 package com.project.restaurantOrderingManagement.waiter;
 
-import com.project.restaurantOrderingManagement.exceptions.FoodNotFoundException;
-import com.project.restaurantOrderingManagement.models.Food;
+import com.project.restaurantOrderingManagement.exceptions.BadRequestException;
 import com.project.restaurantOrderingManagement.models.Log;
 import com.project.restaurantOrderingManagement.models.foodWithAvailability;
 import com.project.restaurantOrderingManagement.models.table;
 import com.project.restaurantOrderingManagement.service.OrderService;
 import com.project.restaurantOrderingManagement.service.billService;
 import com.project.restaurantOrderingManagement.service.foodService;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.project.restaurantOrderingManagement.service.waiterService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-//done testing
+
 @RestController
-@RequestMapping("/{waitercode}")
+@RequestMapping("/{waiterCode}")
 public class waiterController {
-    @Autowired
-    com.project.restaurantOrderingManagement.service.waiterService waiterService;
-    @Autowired
-    billService billService;
-    @Autowired
-    OrderService orderService;
-    @Autowired
-    foodService foodService;
 
-    //fetch table
+    private final waiterService waiterService;
+    private final billService billService;
+    private final OrderService orderService;
+    private final foodService foodService;
+
+    public waiterController(waiterService waiterService,
+                            billService billService,
+                            OrderService orderService,
+                            foodService foodService) {
+        this.waiterService = waiterService;
+        this.billService = billService;
+        this.orderService = orderService;
+        this.foodService = foodService;
+    }
+
     @GetMapping("/fetchTables")
-    public ResponseEntity<List<table>> fetchTables(@PathVariable("waitercode") String waitercode) {
-        List<table> tables = waiterService.fetchTables(waitercode);
-        if (tables.isEmpty()) {
-            ResponseEntity.status(500).body("Tables not found");
-        }
-        return ResponseEntity.ok(tables);
+    public ResponseEntity<List<table>> fetchTables(@PathVariable String waiterCode) {
+        return ResponseEntity.ok(waiterService.fetchTables(waiterCode));
     }
-    //Create bill
-    //Give tableNo alone in response body
+
     @PostMapping("/bill/create")
-    public ResponseEntity<Long> createBill(@RequestBody Map<String,String> requestBody,@PathVariable("waitercode") String waitercode) throws IOException {
-        if (waitercode == null) {
-            throw new IllegalArgumentException("waiterCode cannot be null or empty");
-        }
-        Long billNo = billService.storeBill(waitercode,requestBody.get("tableNo"),requestBody.get("persons"));
-        return ResponseEntity.ok(billNo);
+    public ResponseEntity<Long> createBill(@RequestBody Map<String, String> requestBody,
+                                           @PathVariable String waiterCode) {
+        String tableNo = requestBody.get("tableNo");
+        String persons = requestBody.get("persons");
+        return ResponseEntity.ok(billService.storeBill(waiterCode, tableNo, persons));
     }
-    //get bill
-    @GetMapping("/get/{billNo}")
-    public ResponseEntity<billDTO> getBill(@PathVariable("billNo") String billNo) throws IOException, ClassNotFoundException {
-        billDTO bill = billService.getBill(Long.parseLong(billNo));
-        return ResponseEntity.ok(bill);
 
+    @GetMapping("/bill/{billNo}")
+    public ResponseEntity<billDTO> getBill(@PathVariable long billNo) {
+        return ResponseEntity.ok(billService.getBill(billNo));
     }
-    //close bill
-    // Request body contains billNo
+
     @PostMapping("/bill/close")
-    public ResponseEntity<Log> closeBill(@RequestBody Map<String, String> requestBody,@PathVariable("waitercode") String waitercode) throws IOException {
-        Log l = billService.closeBill(waitercode,Long.parseLong(requestBody.get("billNo")));
-        return ResponseEntity.ok(l);
-
+    public ResponseEntity<Log> closeBill(@RequestBody Map<String, String> requestBody,
+                                         @PathVariable String waiterCode) {
+        String billNo = requestBody.get("billNo");
+        if (billNo == null || billNo.isBlank()) {
+            throw new BadRequestException("billNo is required");
+        }
+        return ResponseEntity.ok(billService.closeBill(waiterCode, Long.parseLong(billNo)));
     }
-    //delete bill
+
     @DeleteMapping("/bill/{billNo}")
-    public ResponseEntity<?> deleteBill(@PathVariable("billNo") Long billNo) throws IOException {
-        try{
-            String response = billService.deleteBill(billNo);
-            return ResponseEntity.ok(response);
-        }catch(Exception e){
-            return ResponseEntity.status(500).body(e.getMessage());
-        }
+    public ResponseEntity<String> deleteBill(@PathVariable long billNo) {
+        return ResponseEntity.ok(billService.deleteBill(billNo));
     }
 
-    //create order
-    // RequestBody "foodCode, quantity, status"
-    @PostMapping("/order/{billno}")
-    public ResponseEntity<Object> createOrder(@PathVariable String billno, @RequestBody Order order) throws IOException {
-       try{
-           orderService.storeOrder(Long.parseLong(billno), order);
-           List<Order> updatedOrders = orderService.getOrders(Long.parseLong(billno));
-       }
-       catch (Exception e){
-           return ResponseEntity.status(500).body(e.getMessage());
-       }
-        return ResponseEntity.ok().build();
+    @PostMapping("/order/{billNo}")
+    public ResponseEntity<String> createOrder(@PathVariable long billNo, @RequestBody Order order) {
+        orderService.storeOrder(billNo, order);
+        return ResponseEntity.ok("Order created");
     }
 
-    //search food
-    @GetMapping("/search")
-    public List<foodWithAvailability> searchFood(@RequestParam String keyword) {
-        try {
-            return foodService.searchFoodByCodeOrName(keyword);
-        } catch (FoodNotFoundException e) {
-            throw new FoodNotFoundException(e.getMessage());
-        }
-    }
-    //update order
-    @PutMapping("/order/{billno}")
-    public ResponseEntity<Object> updateOrder(@PathVariable("billno") String billno, @RequestBody Order order) throws IOException {
-        Order newOrder = null;
-        try {
-            newOrder = orderService.updateFoodItem(Long.parseLong(billno), order);
-            List<Order> updatedOrders = orderService.getOrders(Long.parseLong(billno));
-        } catch (Exception e) {
-             return ResponseEntity.status(500).body(e.getMessage());
-        }
-        return ResponseEntity.ok(newOrder);
+    @PutMapping("/order/{billNo}")
+    public ResponseEntity<Order> updateOrder(@PathVariable long billNo, @RequestBody Order order) {
+        return ResponseEntity.ok(orderService.updateFoodItem(billNo, order));
     }
 
-    //update order status
-    @PostMapping("/order/{billno}/serve")
-    public ResponseEntity<Object> updateOrderStatus(@PathVariable("billno") String billno, @RequestBody Map<String,String> requestBody) throws IOException {
-        try {
-            String foodCode = requestBody.get("foodCode");
-            String msg = waiterService.updateOrderStatus(foodCode, Long.parseLong(billno));
-            return ResponseEntity.ok(msg);
-        }catch (Exception e){
-            return ResponseEntity.status(500).body(e.getMessage());
-        }
-    }
-    //view order
-    @GetMapping("/order/{billno}")
-    public ResponseEntity<List<Order>> getOrders(@PathVariable("billno") String billno) throws IOException {
-        List<Order> orders = orderService.getOrders(Long.parseLong(billno));
-        if(orders.isEmpty()) {
-            return null;
-        }
-        return ResponseEntity.ok(orders);
-    }
-    //delete order
-    @DeleteMapping("/order/{billno}")
-    public ResponseEntity<Object> deleteOrder(@PathVariable("billno") String billno,
-                                              @RequestBody Map<String, String> requestBody) {
-        System.out.println("Received request to delete food item.");
-        System.out.println("Bill No: " + billno);
-        System.out.println("Request Body: " + requestBody);
-
+    @PostMapping("/order/{billNo}/serve")
+    public ResponseEntity<String> updateOrderStatus(@PathVariable long billNo,
+                                                    @RequestBody Map<String, String> requestBody) {
         String foodCode = requestBody.get("foodCode");
-        if (foodCode == null || foodCode.trim().isEmpty()) {
-            return ResponseEntity.badRequest().body("FoodCode is missing in request body.");
+        if (foodCode == null || foodCode.isBlank()) {
+            throw new BadRequestException("foodCode is required");
         }
+        return ResponseEntity.ok(waiterService.updateOrderStatus(foodCode, billNo));
+    }
 
-        try {
-            String responseMessage = orderService.deleteOrder(Long.parseLong(billno), foodCode);
-            return ResponseEntity.ok(responseMessage);
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body(e.getMessage());
-        }
+    @GetMapping("/order/{billNo}")
+    public ResponseEntity<List<Order>> getOrders(@PathVariable long billNo) {
+        return ResponseEntity.ok(orderService.getOrders(billNo));
+    }
+
+    @DeleteMapping("/order/{billNo}")
+    public ResponseEntity<String> deleteOrder(@PathVariable long billNo,
+                                              @RequestBody Map<String, String> requestBody) {
+        String foodCode = requestBody.get("foodCode");
+        return ResponseEntity.ok(orderService.deleteOrder(billNo, foodCode));
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<foodWithAvailability>> searchFood(@RequestParam String keyword) {
+        return ResponseEntity.ok(foodService.searchFoodByCodeOrName(keyword));
     }
 }

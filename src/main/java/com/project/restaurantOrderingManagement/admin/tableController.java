@@ -1,51 +1,59 @@
 package com.project.restaurantOrderingManagement.admin;
 
+import com.project.restaurantOrderingManagement.exceptions.BadRequestException;
 import com.project.restaurantOrderingManagement.models.table;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.project.restaurantOrderingManagement.repositories.tableRepo;
+import com.project.restaurantOrderingManagement.service.tableStatusService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController("ManagerTableController")
 @RequestMapping("/manager/table")
 public class tableController {
-    @Autowired
-    ManagerService managerService;
-    @Autowired
-    private com.project.restaurantOrderingManagement.repositories.tableRepo tableRepo;
 
-    public tableController(ManagerService managerService) {
+    private final ManagerService managerService;
+    private final tableRepo tableRepo;
+    private final tableStatusService tableStatusService;
+
+    public tableController(ManagerService managerService, tableRepo tableRepo, tableStatusService tableStatusService) {
         this.managerService = managerService;
+        this.tableRepo = tableRepo;
+        this.tableStatusService = tableStatusService;
     }
 
     @PostMapping
-    ResponseEntity<table> addTable(@RequestBody table table) {
-        table.setTableNo(tableRepo.findTopByOrderByTableNoDesc().getTableNo() + 1);
-        com.project.restaurantOrderingManagement.models.table t = managerService.addTableItem(table);
-        return ResponseEntity.ok(t);
+    public ResponseEntity<table> addTable(@RequestBody table table) {
+        table last = tableRepo.findTopByOrderByTableNoDesc();
+        int nextTableNo = last == null ? 1 : last.getTableNo() + 1;
+        table.setTableNo(nextTableNo);
+        return ResponseEntity.ok(managerService.addTableItem(table));
     }
 
     @GetMapping
-    ResponseEntity<List<table>> getTables() {
-        List<table> tables = managerService.getAllTables();
-        return ResponseEntity.ok(tables);
+    public ResponseEntity<List<table>> getTables() {
+        return ResponseEntity.ok(managerService.getAllTables());
     }
 
     @DeleteMapping("/{tableNo}")
-    ResponseEntity<?> deleteTable(@PathVariable String tableNo) {
-        int tableNoInt = Integer.parseInt(tableNo);
-        managerService.removeTableItem(tableNoInt);
-        return ResponseEntity.ok("Deleted table No : " + tableNo);
+    public ResponseEntity<String> deleteTable(@PathVariable int tableNo) {
+        managerService.removeTableItem(tableNo);
+        return ResponseEntity.ok("Deleted table No: " + tableNo);
     }
 
     @PutMapping("/{tableNo}")
-    ResponseEntity<table> updateTable(@PathVariable String tableNo, @RequestBody int seats) {
-        int tableNoInt = Integer.parseInt(tableNo);
-        table t = managerService.updateTableItem(tableNoInt,seats);
-        return ResponseEntity.ok(t);
-
+    public ResponseEntity<table> updateTable(@PathVariable int tableNo, @RequestBody Map<String, Integer> body) {
+        Integer seats = body.get("seats");
+        if (seats == null || seats <= 0) {
+            throw new BadRequestException("seats must be greater than 0");
+        }
+        return ResponseEntity.ok(managerService.updateTableItem(tableNo, seats));
     }
 
-
+    @GetMapping("/status")
+    public ResponseEntity<Map<String, Integer>> getLiveTableStatus() {
+        return ResponseEntity.ok(tableStatusService.getTableStatus());
+    }
 }

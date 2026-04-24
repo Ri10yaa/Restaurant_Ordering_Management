@@ -1,37 +1,41 @@
 package com.project.restaurantOrderingManagement.service;
+
+import com.project.restaurantOrderingManagement.exceptions.BadRequestException;
 import com.project.restaurantOrderingManagement.exceptions.BillNotFoundException;
+import com.project.restaurantOrderingManagement.exceptions.OperationFailedException;
 import com.project.restaurantOrderingManagement.exceptions.OrderNotFoundException;
 import com.project.restaurantOrderingManagement.helpers.BillNoIncrementingService;
 import com.project.restaurantOrderingManagement.models.Food;
 import com.project.restaurantOrderingManagement.models.Log;
 import com.project.restaurantOrderingManagement.repositories.foodRepo;
+import com.project.restaurantOrderingManagement.repositories.logRepo;
 import com.project.restaurantOrderingManagement.waiter.Order;
 import com.project.restaurantOrderingManagement.waiter.billDTO;
-import jakarta.validation.constraints.Null;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import com.project.restaurantOrderingManagement.repositories.logRepo;
 
-import java.io.*;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.*;
 
-//check for calculate amount function
 @Service
 public class billService {
-    @Autowired
-    private final RedisTemplate<String, Object> redisTemplate;
-    @Autowired
-    private OrderService orderService;
-    @Autowired
-    private final foodRepo foodRepo;
-    @Autowired
-    private final tableStatusService tableStatusService;
 
-    public billService(com.project.restaurantOrderingManagement.repositories.logRepo logRepo, OrderService orderService, RedisTemplate<String, Object> redisTemplate, foodRepo foodRepo, com.project.restaurantOrderingManagement.service.tableStatusService tableStatusService, BillNoIncrementingService billNoIncrementingService) {
+    private static final String BILL_KEY_PREFIX = "bill:";
+
+    private final RedisTemplate<String, Object> redisTemplate;
+    private final OrderService orderService;
+    private final foodRepo foodRepo;
+    private final tableStatusService tableStatusService;
+    private final logRepo logRepo;
+    private final BillNoIncrementingService billNoIncrementingService;
+
+    public billService(logRepo logRepo,
+                       OrderService orderService,
+                       RedisTemplate<String, Object> redisTemplate,
+                       foodRepo foodRepo,
+                       tableStatusService tableStatusService,
+                       BillNoIncrementingService billNoIncrementingService) {
         this.logRepo = logRepo;
         this.orderService = orderService;
         this.redisTemplate = redisTemplate;
@@ -40,139 +44,140 @@ public class billService {
         this.billNoIncrementingService = billNoIncrementingService;
     }
 
-    @Autowired
-    private logRepo logRepo;
-    @Autowired
-    private final BillNoIncrementingService billNoIncrementingService;
-
-    private static final String key = "bill:";
     public double calculateAmount(List<Order> orders) {
         if (orders == null || orders.isEmpty()) {
-            System.err.println("Orders list is null or empty");
             return 0.0;
         }
-        double amount = 0;
+
+        double amount = 0.0;
         for (Order order : orders) {
-            if (order == null) {
-                System.err.println("Null order found in the list");
-                continue;
-            }
-            if (order.getFoodCode() == null || order.getFoodCode().isEmpty()) {
-                System.err.println("Invalid foodCode in order: " + order);
+            if (order == null || order.getFoodCode() == null || order.getFoodCode().isBlank()) {
                 continue;
             }
 
             Optional<Food> foodOptional = foodRepo.findById(order.getFoodCode());
-            if (!foodOptional.isPresent()) {
-                System.err.println("Food not found for foodCode: " + order.getFoodCode());
-                continue;
+            if (foodOptional.isPresent()) {
+                amount += foodOptional.get().getPrice() * order.getQuantity();
             }
-
-            Food food = foodOptional.get();
-            amount += food.getPrice() * order.getQuantity();
         }
 
         return amount;
     }
 
-    public billDTO getBill(long billNo) throws ClassNotFoundException , IOException{
-        Map<Object,Object>  bill = redisTemplate.opsForHash().entries(key + billNo);
-        if(bill == null || bill.isEmpty()) {
-            throw new BillNotFoundException("Bill "+billNo+ "not found");
+    public billDTO getBill(long billNo) {
+        Map<Object, Object> bill = redisTemplate.opsForHash().entries(BILL_KEY_PREFIX + billNo);
+        if (bill == null || bill.isEmpty()) {
+            throw new BillNotFoundException("Bill " + billNo + " not found");
         }
-        String waitercode = (String) bill.get("waiterCode");
-        int tableNo = Integer.parseInt((String) bill.get("tableNo"));
-        int persons = Integer.parseInt((String) bill.get("NoOfPersons"));
-        return new billDTO(billNo, waitercode, tableNo, persons);
-    }
-    @Async
-    public long storeBill(String waitercode, String tableNo, String persons) throws IOException {
-        try{
-            long bill = billNoIncrementingService.incrementBillNo();
 
-            System.out.println("Bill No: " + bill);
-            System.out.println("TableNo: " + tableNo);
-            System.out.println("WaiterCode: " + waitercode);
-            redisTemplate.opsForHash().put(key + bill,"billNo",String.valueOf(bill));
-            redisTemplate.opsForHash().put(key + bill,"waiterCode",waitercode);
-            redisTemplate.opsForHash().put(key + bill,"tableNo",tableNo);
-            redisTemplate.opsForHash().put(key + bill,"NoOfPersons",persons);
-            tableStatusService.markEngaged(Integer.parseInt(tableNo),Integer.parseInt(persons));
-            return bill;
-        }
-        catch(Exception e){
-            throw new RuntimeException("Error inserting bill :" + e.getMessage());
+        String waiterCode = (String) bill.get("waiterCode");
+        int tableNo = Integer.parseInt(String.valueOf(bill.get("tableNo")));
+        int persons = Integer.parseInt(String.valueOf(bill.get("NoOfPersons")));
+
+        return new billDTO(billNo, waiterCode, tableNo, persons);
+    }
+
+    public long storeBill(String waiterCode, String tableNo, String persons) {
+        validateBillCreateInput(waiterCode, tableNo, persons);
+
+        try {
+            long billNo = billNoIncrementingService.incrementBillNo();
+            String billKey = BILL_KEY_PREFIX + billNo;
+
+            redisTemplate.opsForHash().put(billKey, "billNo", String.valueOf(billNo));
+            redisTemplate.opsForHash().put(billKey, "waiterCode", waiterCode);
+            redisTemplate.opsForHash().put(billKey, "tableNo", tableNo);
+            redisTemplate.opsForHash().put(billKey, "NoOfPersons", persons);
+
+            tableStatusService.markEngaged(Integer.parseInt(tableNo), Integer.parseInt(persons));
+            return billNo;
+        } catch (Exception e) {
+            throw new OperationFailedException("Failed to create bill for table " + tableNo, e);
         }
     }
-    @Async
-    public Log closeBill(String waiterCode,long billNo) {
-        if(!redisTemplate.hasKey(key + billNo)) {
-            throw new BillNotFoundException("Bill not found");
+
+    public Log closeBill(String waiterCode, long billNo) {
+        String billKey = BILL_KEY_PREFIX + billNo;
+        if (!Boolean.TRUE.equals(redisTemplate.hasKey(billKey))) {
+            throw new BillNotFoundException("Bill " + billNo + " not found");
         }
-        try{
-            List<Order> orders = orderService.closeOrder(billNo);
-            Object table = redisTemplate.opsForHash().get("bill:"+billNo,"tableNo");
-            Object persons = redisTemplate.opsForHash().get("bill:"+billNo,"NoOfPersons");
-            System.out.println("In bill service");
-            for(Order order : orders){
-                System.out.println(order.getFoodCode());
+
+        try {
+            List<Order> servedOrders = orderService.closeOrder(billNo);
+            if (servedOrders.isEmpty()) {
+                throw new OrderNotFoundException("No served orders available to close bill " + billNo);
             }
-            if(orders.isEmpty()){
-                throw new OrderNotFoundException("Orders are null");
-            }
-            double amt = calculateAmount(orders);
-            System.out.println("Amount after close: " + amt);
-            LocalDate today = LocalDate.now();
-            LocalTime currentTime = LocalTime.now();
+
+            Object table = redisTemplate.opsForHash().get(billKey, "tableNo");
+            Object persons = redisTemplate.opsForHash().get(billKey, "NoOfPersons");
 
             Log log = new Log();
-            log.setAmount(amt);
-            log.setFoodItems(orders);
+            log.setAmount(calculateAmount(servedOrders));
+            log.setFoodItems(servedOrders);
             log.setBillNo(billNo);
             log.setWaiterCode(waiterCode);
-            log.setDate(today);
-            log.setTime(currentTime);
+            log.setDate(LocalDate.now());
+            log.setTime(LocalTime.now());
+
             logRepo.save(log);
-            if(!orders.isEmpty()){
-                tableStatusService.markVacant(Integer.parseInt(table.toString()),Integer.parseInt(persons.toString()));
-                redisTemplate.delete(key + billNo);
-            }
-            else{
-                System.out.println("Orders are empty");
-            }
 
+            tableStatusService.markVacant(Integer.parseInt(String.valueOf(table)), Integer.parseInt(String.valueOf(persons)));
+            redisTemplate.delete(billKey);
             return log;
+        } catch (RuntimeException ex) {
+            throw ex;
+        } catch (Exception e) {
+            throw new OperationFailedException("Failed to close bill " + billNo, e);
         }
-        catch(Exception e){
-            throw new RuntimeException("Error while closing bill : " + e.getMessage());
-        }
-
     }
 
     public String deleteBill(long billNo) {
-        try{
-            Set<String> bill = redisTemplate.keys(key + String.valueOf(billNo));
-            Integer table = Integer.parseInt((redisTemplate.opsForHash().get(key + String.valueOf(billNo), "tableNo").toString()));
-            Integer persons = Integer.parseInt(redisTemplate.opsForHash().get(key + String.valueOf(billNo), "NoOfPersons").toString());
-            if(bill.isEmpty() || table == null || persons == null){
-                throw new BillNotFoundException("Bill not found");
+        String billKey = BILL_KEY_PREFIX + billNo;
+        if (!Boolean.TRUE.equals(redisTemplate.hasKey(billKey))) {
+            throw new BillNotFoundException("Bill " + billNo + " not found");
+        }
+
+        try {
+            Object tableObj = redisTemplate.opsForHash().get(billKey, "tableNo");
+            Object personsObj = redisTemplate.opsForHash().get(billKey, "NoOfPersons");
+
+            List<Order> orders = orderService.getOrders(billNo);
+            for (Order order : orders) {
+                orderService.deleteOrder(billNo, order.getFoodCode());
             }
-            else{
-                List<Order> orders = orderService.getOrders(billNo);
-                if(orders != null){
-                    for(Order order : orders){
-                        orderService.deleteOrder(billNo, order.getFoodCode());
-                    }
-                }
-                tableStatusService.markVacant(table,persons);
-                redisTemplate.delete(key + billNo);
-                return "Bill No " + billNo + " deleted";
+
+            if (tableObj != null && personsObj != null) {
+                tableStatusService.markVacant(Integer.parseInt(tableObj.toString()), Integer.parseInt(personsObj.toString()));
             }
+            redisTemplate.delete(billKey);
+
+            return "Bill " + billNo + " deleted";
+        } catch (RuntimeException ex) {
+            throw ex;
         } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException("Error in deleting bill" + e.getMessage());
+            throw new OperationFailedException("Failed to delete bill " + billNo, e);
         }
     }
 
+    private void validateBillCreateInput(String waiterCode, String tableNo, String persons) {
+        if (waiterCode == null || waiterCode.isBlank()) {
+            throw new BadRequestException("waiterCode is required");
+        }
+        if (tableNo == null || tableNo.isBlank()) {
+            throw new BadRequestException("tableNo is required");
+        }
+        if (persons == null || persons.isBlank()) {
+            throw new BadRequestException("persons is required");
+        }
 
+        try {
+            int table = Integer.parseInt(tableNo);
+            int headCount = Integer.parseInt(persons);
+            if (table <= 0 || headCount <= 0) {
+                throw new BadRequestException("tableNo and persons must be greater than 0");
+            }
+        } catch (NumberFormatException ex) {
+            throw new BadRequestException("tableNo and persons must be numbers");
+        }
+    }
 }

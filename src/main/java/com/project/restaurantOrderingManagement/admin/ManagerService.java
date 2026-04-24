@@ -3,10 +3,10 @@ package com.project.restaurantOrderingManagement.admin;
 import com.project.restaurantOrderingManagement.models.Employee;
 import com.project.restaurantOrderingManagement.models.Food;
 import com.project.restaurantOrderingManagement.models.table;
+import com.project.restaurantOrderingManagement.models.foodWithAvailability;
 import com.project.restaurantOrderingManagement.service.employeeService;
 import com.project.restaurantOrderingManagement.service.foodService;
 import com.project.restaurantOrderingManagement.service.tableService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -14,11 +14,9 @@ import java.util.Optional;
 
 @Service
 public class ManagerService {
-    @Autowired
+
     private final foodService foodService;
-    @Autowired
     private final employeeService employeeService;
-    @Autowired
     private final tableService tableService;
 
     public ManagerService(employeeService employeeService, foodService foodService, tableService tableService) {
@@ -36,7 +34,7 @@ public class ManagerService {
     }
 
     public Food updateFoodItem(String code, Food foodItem) {
-       return foodService.updateFoodItem(code, foodItem);
+        return foodService.updateFoodItem(code, foodItem);
     }
 
     public Optional<Food> getFoodItem(String code) {
@@ -52,7 +50,7 @@ public class ManagerService {
     }
 
     public Employee alterStaff(String code, empInfo employee) {
-        return employeeService.updateEmployee(code,employee);
+        return employeeService.updateEmployee(code, employee);
     }
 
     public Optional<Employee> getStaff(String code) {
@@ -63,16 +61,23 @@ public class ManagerService {
         return tableService.addTable(tableItem);
     }
 
-    public List<table> getAllTables(){
+    public List<table> getAllTables() {
         return tableService.getAllTables();
     }
 
     public table updateTableItem(int no, int seats) {
-        return tableService.updateTable(no,seats);
+        return tableService.updateTable(no, seats);
     }
 
     public void removeTableItem(int tableNo) {
         tableService.deleteTable(tableNo);
     }
 
+    public List<foodWithAvailability> getAllFoodWithAvailability() {
+        return foodService.getAllFoodWithAvailability();
+    }
+
+    public String setFoodDailyQuantity(String foodCode, int quantity) {
+        return foodService.setDailyQuantity(foodCode, quantity);
+    }
 }

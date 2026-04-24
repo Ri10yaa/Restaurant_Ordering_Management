@@ -3,30 +3,30 @@ package com.project.restaurantOrderingManagement.service;
 import com.project.restaurantOrderingManagement.exceptions.OrderNotFoundException;
 import com.project.restaurantOrderingManagement.models.Log;
 import com.project.restaurantOrderingManagement.repositories.logRepo;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
 public class logService {
-    @Autowired
-    logRepo logRepo;
+
+    private final logRepo logRepo;
 
     public logService(logRepo logRepo) {
         this.logRepo = logRepo;
     }
 
-    public Log getLog(int id) {
-        return logRepo.findById(id).get();
+    public Log getLog(long billNo) {
+        return logRepo.findById(billNo)
+                .orElseThrow(() -> new OrderNotFoundException("Log with bill number " + billNo + " does not exist"));
     }
 
     public List<Log> getAllLogsByWaiter(String code) {
         return logRepo.findAllByWaiterCode(code);
     }
 
-    public List<Log> getAllLogsByDate(Date date) {
+    public List<Log> getAllLogsByDate(LocalDate date) {
         return logRepo.findAllByDate(date);
     }
 
@@ -34,18 +34,10 @@ public class logService {
         return logRepo.save(log);
     }
 
-    public void deleteLog(long billno) {
-        if(logRepo.existsById(billno)) {
-            try{
-                logRepo.deleteById(billno);
-            }
-            catch(Exception e) {
-                throw new RuntimeException("Error while deleting log with bill number " + billno,e);
-            }
+    public void deleteLog(long billNo) {
+        if (!logRepo.existsById(billNo)) {
+            throw new OrderNotFoundException("Log with bill number " + billNo + " does not exist");
         }
-        else{
-            throw new OrderNotFoundException("Log with code "+billno+" does not exist");
-        }
+        logRepo.deleteById(billNo);
     }
-
 }

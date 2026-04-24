@@ -2,9 +2,9 @@ package com.project.restaurantOrderingManagement.admin;
 
 import com.project.restaurantOrderingManagement.helpers.BillNoIncrementingService;
 import com.project.restaurantOrderingManagement.service.foodAvailabilityService;
-import com.project.restaurantOrderingManagement.waiter.tableAssignment;
+import com.project.restaurantOrderingManagement.service.RestaurantSettingsService;
 import com.project.restaurantOrderingManagement.service.tableStatusService;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.project.restaurantOrderingManagement.waiter.tableAssignment;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,62 +13,49 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 import java.util.Map;
-//This controller for testing, not for API
+
 @RestController
 @RequestMapping("/schedule")
 public class scheduledController {
-    @Autowired
+
     private final tableAssignment tableAssignment;
-    @Autowired
     private final foodAvailabilityService foodAvailabilityService;
-    @Autowired
-    private RedisTemplate<String, Object> redisTemplate;
+    private final RedisTemplate<String, Object> redisTemplate;
+    private final BillNoIncrementingService billNoIncrementingService;
+    private final tableStatusService tableStatusService;
+    private final RestaurantSettingsService restaurantSettingsService;
 
-    private BillNoIncrementingService billNoIncrementingService;
-    @Autowired
-    private tableStatusService tableStatusService;
-
-    public scheduledController(com.project.restaurantOrderingManagement.waiter.tableAssignment tableAssignment, com.project.restaurantOrderingManagement.service.foodAvailabilityService foodAvailabilityService, BillNoIncrementingService billNoIncrementingService) {
+    public scheduledController(tableAssignment tableAssignment,
+                               foodAvailabilityService foodAvailabilityService,
+                               RedisTemplate<String, Object> redisTemplate,
+                               BillNoIncrementingService billNoIncrementingService,
+                               tableStatusService tableStatusService,
+                               RestaurantSettingsService restaurantSettingsService) {
         this.tableAssignment = tableAssignment;
         this.foodAvailabilityService = foodAvailabilityService;
+        this.redisTemplate = redisTemplate;
         this.billNoIncrementingService = billNoIncrementingService;
+        this.tableStatusService = tableStatusService;
+        this.restaurantSettingsService = restaurantSettingsService;
     }
-    //When the manager switch on the server
+
     @GetMapping("/assignTable")
-    public ResponseEntity<?> assignTable() {
-        try{
-            Map<String, List<Integer>> assignment = tableAssignment.assignTable();
-            return ResponseEntity.ok(assignment);
-        }
-        catch (Exception e){
-            return ResponseEntity.status(500).body("Error assigning tables: " + e.getMessage());
-        }
+    public ResponseEntity<Map<String, List<Integer>>> assignTable() {
+        return ResponseEntity.ok(tableAssignment.assignTable());
     }
-    //when the manager switch off the server
+
     @GetMapping("/reset")
-    public ResponseEntity<?> resetFoodAvailability() {
-        try{
-            foodAvailabilityService.resetAvailability();
-            billNoIncrementingService.setBillNo();
-            tableStatusService.resetTableStatus();
-            return ResponseEntity.ok().body("Reset is successfull");
-        }
-        catch (Exception e){
-            e.printStackTrace();
-            return ResponseEntity.status(500).body("Error resetting redis: " + e.getMessage());
-        }
+    public ResponseEntity<String> resetData() {
+        foodAvailabilityService.resetAvailability();
+        billNoIncrementingService.setBillNo();
+        tableStatusService.resetTableStatus();
+        restaurantSettingsService.markResetDoneToday();
+        return ResponseEntity.ok("Reset completed successfully");
     }
 
     @GetMapping("/flush")
-    public ResponseEntity<?> flushRedis() {
-        try{
-            redisTemplate.getConnectionFactory().getConnection().flushAll();
-            return ResponseEntity.ok().body("Redis flushed");
-        }catch (Exception e){
-            return ResponseEntity.status(500).body("Error flushing redis: " + e.getMessage());
-        }
-
+    public ResponseEntity<String> flushRedis() {
+        redisTemplate.getConnectionFactory().getConnection().flushAll();
+        return ResponseEntity.ok("Redis flushed");
     }
-
-
 }

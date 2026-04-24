@@ -10,10 +10,13 @@ public class WaitingList {
     private String name;
     private String phoneNumber;
     private int seatsRequired;
-    private boolean isOkToSplit; // Added field
+    private boolean isOkToSplit;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime timeOfEntry;
+
+    public WaitingList() {
+    }
 
     public WaitingList(String name, String phoneNumber, int seatsRequired, boolean isOkToSplit, LocalDateTime timeOfEntry) {
         this.name = name;
@@ -61,5 +64,16 @@ public class WaitingList {
 
     public void setTimeOfEntry(LocalDateTime timeOfEntry) {
         this.timeOfEntry = timeOfEntry;
+    }
+
+    @Override
+    public String toString() {
+        return "WaitingList{" +
+                "name='" + name + '\'' +
+                ", phoneNumber='" + phoneNumber + '\'' +
+                ", seatsRequired=" + seatsRequired +
+                ", isOkToSplit=" + isOkToSplit +
+                ", timeOfEntry=" + timeOfEntry +
+                '}';
     }
 }

@@ -1,51 +1,90 @@
 package com.project.restaurantOrderingManagement.kitchen;
 
+import com.project.restaurantOrderingManagement.exceptions.BadRequestException;
+import com.project.restaurantOrderingManagement.manager.ChefDisplayDTO;
+import com.project.restaurantOrderingManagement.manager.KitchenOrderDTO;
+import com.project.restaurantOrderingManagement.models.Chef;
+import com.project.restaurantOrderingManagement.models.Employee;
+import com.project.restaurantOrderingManagement.repositories.empRepo;
+import com.project.restaurantOrderingManagement.service.ChefAttendanceService;
 import com.project.restaurantOrderingManagement.service.ChefOrderService;
 import com.project.restaurantOrderingManagement.waiter.Order;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.IOException;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/chef")
 public class kitchenController {
 
-    @Autowired
-    private kitchenService kitchenService;
-    @Autowired
-    private ChefOrderService chefOrderService;
+    private final kitchenService kitchenService;
+    private final ChefOrderService chefOrderService;
+    private final ChefAttendanceService chefAttendanceService;
+    private final empRepo employeeRepository;
 
-    @PostMapping("/{empCode}")
-    public String updateOrderStatus(
-            @PathVariable String empCode,
-            @RequestBody OrderRequest request) {  // Accept JSON body
-        try {
-            if(request.getBillno()!=null && request.getFoodCode()!=null) {
-                kitchenService.updateOrderStatus(request.getFoodCode(), request.getBillno());
-                return "Order status update initiated for BillNo: " + request.getBillno() + " by Chef: " + empCode;
-            }
-            return "Bill no or foodCode is null";
-        } catch (IOException e) {
-            return "Error updating order status: " + e.getMessage();
-        }
+    public kitchenController(kitchenService kitchenService,
+                             ChefOrderService chefOrderService,
+                             ChefAttendanceService chefAttendanceService,
+                             empRepo employeeRepository) {
+        this.kitchenService = kitchenService;
+        this.chefOrderService = chefOrderService;
+        this.chefAttendanceService = chefAttendanceService;
+        this.employeeRepository = employeeRepository;
     }
 
+    @PostMapping("/{empCode}")
+    public ResponseEntity<String> updateOrderStatus(@PathVariable String empCode,
+                                                    @RequestBody OrderRequest request) {
+        if (request.getBillno() == null || request.getBillno().isBlank()) {
+            throw new BadRequestException("billNo is required");
+        }
+        if (request.getFoodCode() == null || request.getFoodCode().isBlank()) {
+            throw new BadRequestException("foodCode is required");
+        }
+
+        kitchenService.updateOrderStatus(request.getFoodCode(), request.getBillno());
+        return ResponseEntity.ok("Order preparation started by chef " + empCode);
+    }
 
     @GetMapping("/{empCode}")
     public ResponseEntity<List<Order>> getChefOrders(@PathVariable String empCode) {
-        try {
-            List<Order> orders = chefOrderService.getOrdersForChef(empCode);
-            if (orders.isEmpty()) {
-                return ResponseEntity.ok(Collections.emptyList());
-            }
-            return ResponseEntity.ok(orders);
-        } catch (Exception e) {
-            return ResponseEntity.status(500).build();
-        }
+        return ResponseEntity.ok(chefOrderService.getOrdersForChef(empCode));
     }
 
+    @GetMapping("/active-display")
+    public ResponseEntity<List<ChefDisplayDTO>> getActiveChefDisplay() {
+        List<String> activeChefCodes = chefAttendanceService.getActiveChefCodes();
+        List<ChefDisplayDTO> display = new ArrayList<>();
+
+        for (String code : activeChefCodes) {
+            Optional<Employee> employee = employeeRepository.findById(code);
+            if (employee.isEmpty() || !(employee.get() instanceof Chef chef)) {
+                continue;
+            }
+
+            List<Order> orders = chefOrderService.getOrdersForChef(code);
+            List<KitchenOrderDTO> orderDTOs = new ArrayList<>();
+            for (Order order : orders) {
+                KitchenOrderDTO dto = new KitchenOrderDTO();
+                dto.setBillNo(order.getBillNo());
+                dto.setFoodCode(order.getFoodCode());
+                dto.setQuantity(order.getQuantity());
+                dto.setStatus(order.getStatus());
+                orderDTOs.add(dto);
+            }
+
+            ChefDisplayDTO chefDTO = new ChefDisplayDTO();
+            chefDTO.setEmpCode(code);
+            chefDTO.setEmpName(chef.getEmpName());
+            chefDTO.setSpec(chef.getSpec());
+            chefDTO.setLoggedIn(true);
+            chefDTO.setOrders(orderDTOs);
+            display.add(chefDTO);
+        }
+
+        return ResponseEntity.ok(display);
+    }
 }

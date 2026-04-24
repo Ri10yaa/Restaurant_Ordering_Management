@@ -1,38 +1,29 @@
 package com.project.restaurantOrderingManagement.waiter;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.stereotype.Component;
 
 @Component
 public class OrderPublisher {
-    @Autowired
-    private RedisTemplate<String, Object> redisTemplate;
-    @Autowired
-    private ChannelTopic orderUpdateTopic;
-    @Autowired
-    private ChannelTopic orderDeleteTopic;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final RedisTemplate<String, Object> redisTemplate;
+    private final ChannelTopic orderUpdateTopic;
+    private final ChannelTopic orderDeleteTopic;
 
-    public void publishOrderUpdate(String orderkey) {
-        try{
-           redisTemplate.convertAndSend(orderUpdateTopic.getTopic(),orderkey);
-           System.out.println("Published Order : " + orderkey);
-        }catch (Exception e){
-            System.err.println("Error publishing order : " + e.getMessage());
-            e.printStackTrace();
-        }
+    public OrderPublisher(RedisTemplate<String, Object> redisTemplate,
+                          ChannelTopic orderUpdateTopic,
+                          ChannelTopic orderDeleteTopic) {
+        this.redisTemplate = redisTemplate;
+        this.orderUpdateTopic = orderUpdateTopic;
+        this.orderDeleteTopic = orderDeleteTopic;
     }
 
-    public void publishOrderDelete(String orderkey) {
-        try{
-            redisTemplate.convertAndSend(orderDeleteTopic.getTopic(),orderkey);
-            System.out.println("Published Order : " + orderkey);
-        }catch (Exception e){
-            System.err.println("Error publishing order delete : " + e.getMessage());
-        }
+    public void publishOrderUpdate(String orderKey) {
+        redisTemplate.convertAndSend(orderUpdateTopic.getTopic(), orderKey);
+    }
+
+    public void publishOrderDelete(String orderKey) {
+        redisTemplate.convertAndSend(orderDeleteTopic.getTopic(), orderKey);
     }
 }

@@ -1,7 +1,9 @@
 package com.project.restaurantOrderingManagement.admin;
 
 import com.project.restaurantOrderingManagement.exceptions.FoodNotFoundException;
+import com.project.restaurantOrderingManagement.exceptions.BadRequestException;
 import com.project.restaurantOrderingManagement.models.Food;
+import com.project.restaurantOrderingManagement.models.foodWithAvailability;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -36,6 +38,21 @@ public class foodController {
     public ResponseEntity<Food> deleteFood(@PathVariable("code") String code) {
         managerService.removeFoodItem(code);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/availability")
+    public ResponseEntity<List<foodWithAvailability>> getFoodWithAvailability() {
+        return ResponseEntity.ok(managerService.getAllFoodWithAvailability());
+    }
+
+    @PutMapping("/{code}/quantity")
+    public ResponseEntity<String> setFoodDailyQuantity(@PathVariable("code") String code,
+                                                       @RequestBody Map<String, Integer> body) {
+        Integer quantity = body.get("quantity");
+        if (quantity == null || quantity < 0) {
+            throw new BadRequestException("quantity must be >= 0");
+        }
+        return ResponseEntity.ok(managerService.setFoodDailyQuantity(code, quantity));
     }
 
 }

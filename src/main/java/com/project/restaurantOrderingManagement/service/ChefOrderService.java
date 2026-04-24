@@ -1,39 +1,36 @@
 package com.project.restaurantOrderingManagement.service;
 
-import com.project.restaurantOrderingManagement.models.Chef;
-import com.project.restaurantOrderingManagement.repositories.empRepo;
+import com.project.restaurantOrderingManagement.exceptions.OrderNotFoundException;
 import com.project.restaurantOrderingManagement.waiter.Order;
-import com.project.restaurantOrderingManagement.waiter.OrderPublisher;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Service
 public class ChefOrderService {
 
-    @Autowired
-    private RedisTemplate<String, Object> redisTemplate;
+    private final RedisTemplate<String, Object> redisTemplate;
 
-    @Autowired
-    private empRepo employeeRepository;
+    public ChefOrderService(RedisTemplate<String, Object> redisTemplate) {
+        this.redisTemplate = redisTemplate;
+    }
 
     public String assignOrderToChef(String orderKey, String chefCode) {
-        if(Boolean.TRUE.equals(redisTemplate.hasKey(orderKey))) {
-            redisTemplate.opsForHash().put(orderKey, "chefCode", chefCode);
-            return "Order " + orderKey +" assigned to chef: " + chefCode;
+        if (!Boolean.TRUE.equals(redisTemplate.hasKey(orderKey))) {
+            throw new OrderNotFoundException("Order does not exist: " + orderKey);
         }
-        else{
-            throw new RuntimeException("Order does not exist");
-        }
+
+        redisTemplate.opsForHash().put(orderKey, "chefCode", chefCode);
+        return "Order " + orderKey + " assigned to chef " + chefCode;
     }
 
     public String getChefForOrder(String billNo, String foodCode) {
-        String orderKey = "orders:billNo:" + billNo + ":" + foodCode;
-
+        String orderKey = "orders:bill:" + billNo + ":" + foodCode;
         Object chefId = redisTemplate.opsForHash().get(orderKey, "chefCode");
-
         return chefId != null ? chefId.toString() : "No chef assigned";
     }
 
@@ -41,20 +38,21 @@ public class ChefOrderService {
         Set<String> keys = redisTemplate.keys("orders:bill:*");
         List<Order> assignedOrders = new ArrayList<>();
 
-        if (keys != null) {
-            for (String key : keys) {
-                Map<Object,Object> orderMap =  redisTemplate.opsForHash().entries(key);
-                Object assignedChef = orderMap.get("chefCode");
-                if (assignedChef != null && assignedChef.toString().equals(chefId)) {
-                    Order order = new Order();
-                    order = order.mapToOrder(orderMap);
+        if (keys == null) {
+            return assignedOrders;
+        }
 
-                    assignedOrders.add(order);
-                }
+        for (String key : keys) {
+            Map<Object, Object> orderMap = redisTemplate.opsForHash().entries(key);
+            Object assignedChef = orderMap.get("chefCode");
+            if (assignedChef != null && assignedChef.toString().equals(chefId)) {
+                String[] parts = key.split(":");
+                String billNo = parts.length > 2 ? parts[2] : null;
+                String foodCode = key.substring(key.lastIndexOf(':') + 1);
+                assignedOrders.add(Order.mapToOrder(orderMap, foodCode, billNo));
             }
         }
+
         return assignedOrders;
     }
-
-
 }
